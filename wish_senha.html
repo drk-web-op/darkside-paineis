@@ -369,37 +369,33 @@ function checkPwd(){
 <div id="toast"></div>
 
 <script>
-// ── DADOS ──────────────────────────────────────────────────────────────
-let D     = [{"data":"27/07/2026","imp":347,"sep":0,"conf":0,"exp":0},{"data":"28/07/2026","imp":2019,"sep":270,"conf":270,"exp":0},{"data":"29/07/2026","imp":34,"sep":321,"conf":321,"exp":67},{"data":"30/07/2026","imp":1096,"sep":500,"conf":500,"exp":221},{"data":"31/07/2026","imp":0,"sep":504,"conf":504,"exp":265},{"data":"01/08/2026","imp":0,"sep":390,"conf":0,"exp":0},{"data":"03/08/2026","imp":0,"sep":111,"conf":489,"exp":114},{"data":"04/08/2026","imp":59,"sep":529,"conf":541,"exp":256},{"data":"05/08/2026","imp":79,"sep":1009,"conf":363,"exp":149},{"data":"06/08/2026","imp":0,"sep":0,"conf":646,"exp":199},{"data":"07/08/2026","imp":435,"sep":0,"conf":0,"exp":25},{"data":"08/08/2026","imp":0,"sep":51,"conf":0,"exp":0},{"data":"10/08/2026","imp":0,"sep":384,"conf":84,"exp":22},{"data":"11/08/2026","imp":3,"sep":0,"conf":351,"exp":149},{"data":"12/08/2026","imp":0,"sep":3,"conf":3,"exp":0},{"data":"13/08/2026","imp":0,"sep":0,"conf":0,"exp":1},{"data":"18/08/2026","imp":6,"sep":0,"conf":0,"exp":0},{"data":"19/08/2026","imp":9,"sep":6,"conf":6,"exp":2},{"data":"20/08/2026","imp":62,"sep":71,"conf":9,"exp":1},{"data":"21/08/2026","imp":62,"sep":0,"conf":62,"exp":1},{"data":"24/08/2026","imp":0,"sep":62,"conf":62,"exp":4},{"data":"27/08/2026","imp":3,"sep":0,"conf":0,"exp":0},{"data":"28/08/2026","imp":10,"sep":3,"conf":3,"exp":2},{"data":"31/08/2026","imp":2,"sep":12,"conf":12,"exp":2},{"data":"01/09/2026","imp":3,"sep":0,"conf":0,"exp":1},{"data":"02/09/2026","imp":0,"sep":3,"conf":3,"exp":1}];
-let AG    = {"fin":{"fev/26":[100,0,0,0,0,0,0,0,0,0],"mar/26":[3.8,15.6,44.2,14.4,0,21.9,0,0.1,0,0],"abr/26":[19.6,52.9,23.5,0,0,3.9,0,0,0,0],"mai/26":[100,0,0,0,0,0,0,0,0,0],"jun/26":[0,100,0,0,0,0,0,0,0,0],"jul/26":[0,14.7,16.5,20.9,25.3,22.6,0,0,0,0],"ago/26":[0.3,43.6,56.2,0,0,0,0,0,0,0],"set/26":[0,100,0,0,0,0,0,0,0,0]},"exp":{"fev/26":[0,100,0,0,0,0],"mar/26":[33.7,62.2,3.9,0,0.1,0],"abr/26":[76.9,23.1,0,0,0,0],"mai/26":[50,50,0,0,0,0],"jul/26":[47.7,52.3,0,0,0,0],"ago/26":[83.7,16.3,0,0,0,0],"set/26":[100,0,0,0,0,0]}};
-let IM    = {"02/26":{"pecas":4,"vols":1,"nfs":1},"03/26":{"pecas":4288,"vols":890,"nfs":890},"04/26":{"pecas":51,"vols":13,"nfs":13},"05/26":{"pecas":5,"vols":1,"nfs":1},"06/26":{"pecas":2,"vols":1,"nfs":1},"07/26":{"pecas":3496,"vols":1266,"nfs":1266},"08/26":{"pecas":730,"vols":215,"nfs":215},"09/26":{"pecas":3,"vols":1,"nfs":1}};
-let ST    = {"EXPEDIDO":{"pecas":4229,"nfs":1482},"CANCELADA":{"pecas":5,"nfs":2}};
-let LAST_DATE  = "02/09/2026";
-let SALDO_SEP  = 3;
-let SALDO_CONF = 3;
-const FECHADOS = ["fev/26", "mar/26", "abr/26", "mai/26", "jun/26", "jul/26", "ago/26"];
 
-let PERIOD = {mode:'7d',from:null,to:null};
-let CH = {};
+// ── CLOUD SYNC (JSONBin) ────────────────────────────────────────────────
+const _JKEY = '$2a$10$Fjcx/uDvAXHbecDl5FaoRel8eMdbyJLqnVHIVngdf/ZBon/L9jAJm';
+const _JURL = 'https://api.jsonbin.io/v3/b/6aa19983ffd5d16053f2b016';
 
-// ── UTILS ──────────────────────────────────────────────────────────────
-const fmt = n => Math.round(n).toLocaleString('pt-BR');
-const mn  = mm => ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][(+mm)-1]||mm;
-function kc(id){ if(CH[id]){CH[id].destroy();delete CH[id];} }
-function showToast(msg,dur=4000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
-function toDate(s){ const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d); }
-function sortD(arr){ return [...arr].sort((a,b)=>toDate(a.data)-toDate(b.data)); }
-function sortMM(keys){ return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):(+ma)-(+mb); }); }
-function sortMes(keys){ const o=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):o.indexOf(ma)-o.indexOf(mb); }); }
+async function cloudLoad() {
+  try {
+    const r = await fetch(_JURL + '/latest', {
+      headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false'}
+    });
+    if (!r.ok) { console.warn('[Cloud] load failed:', r.status); return null; }
+    const j = await r.json();
+    console.log('[Cloud] loaded OK, data:', j.record ? 'present' : 'null');
+    return j.record && j.record.data ? j.record.data : null;
+  } catch(e) { console.warn('[Cloud] load error:', e); return null; }
+}
 
-// ── PERÍODO ────────────────────────────────────────────────────────────
-function inRange(dateStr){
-  const d=toDate(dateStr), ds=sortD(D), last=ds.length?toDate(ds[ds.length-1].data):new Date();
-  if(PERIOD.mode==='7d'){ const r=new Date(last); r.setDate(r.getDate()-6); return d>=r; }
-  if(PERIOD.mode==='14d'){ const r=new Date(last); r.setDate(r.getDate()-13); return d>=r; }
-  if(PERIOD.mode==='30d'){ const r=new Date(last); r.setDate(r.getDate()-29); return d>=r; }
-  if(PERIOD.mode==='custom'){ const sd=PERIOD.from?new Date(PERIOD.from):null,ed=PERIOD.to?new Date(PERIOD.to):null; if(sd&&d<sd)return false; if(ed&&d>ed)return false; return true; }
-  return true;
+async function cloudSave(data) {
+  try {
+    const r = await fetch(_JURL, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json', 'X-Master-Key': _JKEY},
+      body: JSON.stringify({data})
+    });
+    if (!r.ok) { console.warn('[Cloud] save failed:', r.status); return; }
+    console.log('[Cloud] saved OK');
+  } catch(e) { console.warn('[Cloud] save error:', e); }
 }
 function filteredD(){ return sortD(D).filter(r=>inRange(r.data)); }
 function pLabel(){ const fd=filteredD(); if(PERIOD.mode==='7d') return 'últimos 7 dias'; if(PERIOD.mode==='14d') return 'últimos 14 dias'; if(PERIOD.mode==='30d') return 'últimos 30 dias'; return fd.length+' dias'; }
@@ -604,7 +600,8 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
       SALDO_SEP=sSep; SALDO_CONF=sConf;
       document.getElementById('csv-lbl').textContent=f.name+' · '+new Date().toLocaleDateString('pt-BR');
       renderAll();
-      showToast('✅ '+f.name+' importado');
+      cloudSave({D, AG, IM, ST, lbl: document.getElementById('csv-lbl').textContent});
+    showToast('✅ ' + f.name + ' salvo na nuvem');
     }catch(err){ showToast('❌ '+err.message,6000); console.error(err); }
   };
   rd.readAsText(f,'latin1'); this.value='';
@@ -649,7 +646,26 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=
 
 // ── INIT ───────────────────────────────────────────────────────────────
 function renderAll(){ renderResumo(); renderAnalitico(); }
-if(document.readyState==='complete') renderAll(); else window.addEventListener('load',renderAll);
+(async function(){
+  const saved = await cloudLoad();
+  if (saved) {
+    try {
+      if (saved.D)   D   = saved.D;
+      if (saved.AG)  AG  = saved.AG;
+      if (saved.IM)  IM  = saved.IM;
+      if (saved.ST)  ST  = saved.ST;
+      if (saved.lbl) document.getElementById('csv-lbl').textContent = saved.lbl;
+      const allS = D.slice().sort((a,b) => toDate(a.data) - toDate(b.data));
+      LAST_DATE  = allS.length ? allS[allS.length-1].data : '';
+      const last = allS[allS.length-1] || {};
+      SALDO_SEP  = last.sep  || 0;
+      SALDO_CONF = last.conf || 0;
+      console.log('[Cloud] WISH restaurado ✓');
+    } catch(e) { console.warn('[Cloud] restore error:', e); }
+  }
+  if (document.readyState === 'complete') renderAll();
+  else window.addEventListener('load', renderAll);
+})();
 </script>
 </body>
 </html>

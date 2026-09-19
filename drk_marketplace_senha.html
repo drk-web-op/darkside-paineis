@@ -367,50 +367,33 @@ function checkPwd(){
 <div id="toast"></div>
 
 <script>
-// ── DADOS ────────────────────────────────────────────────────────────────
-let MKT_DATA = {
-  TIKTOK: {
-    daily:       [{"data":"01/07/2026","imp":1,"exp":1,"nfs":1},{"data":"02/07/2026","imp":6,"exp":6,"nfs":6},{"data":"03/07/2026","imp":6,"exp":6,"nfs":6},{"data":"04/07/2026","imp":6,"exp":6,"nfs":6},{"data":"05/07/2026","imp":5,"exp":5,"nfs":5},{"data":"06/07/2026","imp":4,"exp":4,"nfs":4},{"data":"07/07/2026","imp":1,"exp":1,"nfs":1},{"data":"08/07/2026","imp":7,"exp":7,"nfs":7},{"data":"09/07/2026","imp":13,"exp":11,"nfs":11},{"data":"14/07/2026","imp":55,"exp":46,"nfs":46},{"data":"15/07/2026","imp":6,"exp":6,"nfs":6},{"data":"16/07/2026","imp":5,"exp":5,"nfs":5},{"data":"17/07/2026","imp":5,"exp":5,"nfs":5},{"data":"18/07/2026","imp":5,"exp":5,"nfs":5},{"data":"19/07/2026","imp":5,"exp":5,"nfs":5},{"data":"20/07/2026","imp":16,"exp":16,"nfs":16},{"data":"21/07/2026","imp":8,"exp":7,"nfs":7},{"data":"22/07/2026","imp":7,"exp":7,"nfs":7},{"data":"23/07/2026","imp":6,"exp":6,"nfs":6},{"data":"24/07/2026","imp":9,"exp":9,"nfs":9},{"data":"25/07/2026","imp":2,"exp":2,"nfs":2},{"data":"26/07/2026","imp":5,"exp":5,"nfs":5},{"data":"27/07/2026","imp":6,"exp":6,"nfs":6},{"data":"28/07/2026","imp":3,"exp":2,"nfs":2},{"data":"29/07/2026","imp":6,"exp":6,"nfs":6},{"data":"30/07/2026","imp":5,"exp":3,"nfs":3},{"data":"31/07/2026","imp":3,"exp":3,"nfs":3},{"data":"01/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"02/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"03/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"04/08/2026","imp":6.0,"exp":5.0,"nfs":5},{"data":"05/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"06/08/2026","imp":11.0,"exp":11.0,"nfs":11},{"data":"07/08/2026","imp":19.0,"exp":15.0,"nfs":15},{"data":"08/08/2026","imp":7.0,"exp":6.0,"nfs":6},{"data":"09/08/2026","imp":7.0,"exp":7.0,"nfs":7},{"data":"10/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"11/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"12/08/2026","imp":5.0,"exp":4.0,"nfs":4},{"data":"13/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"14/08/2026","imp":7.0,"exp":7.0,"nfs":7},{"data":"15/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"16/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"17/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"18/08/2026","imp":21.0,"exp":18.0,"nfs":18},{"data":"19/08/2026","imp":6.0,"exp":4.0,"nfs":4},{"data":"20/08/2026","imp":11.0,"exp":7.0,"nfs":7},{"data":"21/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"22/08/2026","imp":9.0,"exp":6.0,"nfs":6},{"data":"23/08/2026","imp":35.0,"exp":20.0,"nfs":20},{"data":"24/08/2026","imp":25.0,"exp":10.0,"nfs":10},{"data":"25/08/2026","imp":9.0,"exp":6.0,"nfs":6},{"data":"26/08/2026","imp":24.0,"exp":9.0,"nfs":9},{"data":"27/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"28/08/2026","imp":13.0,"exp":7.0,"nfs":7},{"data":"29/08/2026","imp":2.0,"exp":2.0,"nfs":2},{"data":"30/08/2026","imp":5.0,"exp":4.0,"nfs":4},{"data":"31/08/2026","imp":30.0,"exp":15.0,"nfs":15},{"data":"01/09/2026","imp":19.0,"exp":13.0,"nfs":13}],
-    an:          [{"data":"01/07/2026","imp":1,"fin":1,"sep":1,"conf":1,"expvol":1},{"data":"02/07/2026","imp":6,"fin":2,"sep":3,"conf":2,"expvol":2},{"data":"03/07/2026","imp":6,"fin":7,"sep":6,"conf":7,"expvol":6},{"data":"04/07/2026","imp":6,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"05/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"06/07/2026","imp":4,"fin":15,"sep":15,"conf":15,"expvol":16},{"data":"07/07/2026","imp":1,"fin":3,"sep":3,"conf":3,"expvol":3},{"data":"08/07/2026","imp":7,"fin":5,"sep":5,"conf":5,"expvol":3},{"data":"09/07/2026","imp":13,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"10/07/2026","imp":0,"fin":16,"sep":16,"conf":16,"expvol":16},{"data":"14/07/2026","imp":55,"fin":51,"sep":51,"conf":51,"expvol":42},{"data":"15/07/2026","imp":6,"fin":10,"sep":10,"conf":10,"expvol":10},{"data":"16/07/2026","imp":5,"fin":3,"sep":3,"conf":3,"expvol":2},{"data":"17/07/2026","imp":5,"fin":6,"sep":6,"conf":6,"expvol":5},{"data":"18/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"19/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"20/07/2026","imp":16,"fin":13,"sep":13,"conf":13,"expvol":15},{"data":"21/07/2026","imp":8,"fin":19,"sep":19,"conf":19,"expvol":18},{"data":"22/07/2026","imp":7,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"23/07/2026","imp":6,"fin":9,"sep":9,"conf":9,"expvol":9},{"data":"24/07/2026","imp":9,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"25/07/2026","imp":2,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"26/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"27/07/2026","imp":6,"fin":16,"sep":16,"conf":16,"expvol":16},{"data":"28/07/2026","imp":3,"fin":6,"sep":6,"conf":6,"expvol":5},{"data":"29/07/2026","imp":6,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"30/07/2026","imp":5,"fin":6,"sep":6,"conf":6,"expvol":2},{"data":"31/07/2026","imp":3,"fin":0,"sep":0,"conf":0,"expvol":2},{"data":"01/08/2026","imp":3.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"02/08/2026","imp":3.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"03/08/2026","imp":3.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":6.0},{"data":"04/08/2026","imp":6.0,"fin":4.0,"sep":7.0,"conf":4.0,"expvol":4.0},{"data":"05/08/2026","imp":6.0,"fin":7.0,"sep":7.0,"conf":7.0,"expvol":6.0},{"data":"06/08/2026","imp":11.0,"fin":10.0,"sep":10.0,"conf":10.0,"expvol":10.0},{"data":"07/08/2026","imp":19.0,"fin":6.0,"sep":3.0,"conf":6.0,"expvol":6.0},{"data":"08/08/2026","imp":7.0,"fin":18.0,"sep":18.0,"conf":18.0,"expvol":0},{"data":"09/08/2026","imp":7.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"10/08/2026","imp":1.0,"fin":15.0,"sep":15.0,"conf":15.0,"expvol":28.0},{"data":"11/08/2026","imp":1.0,"fin":0,"sep":1.0,"conf":0,"expvol":0},{"data":"12/08/2026","imp":5.0,"fin":4.0,"sep":3.0,"conf":4.0,"expvol":0},{"data":"13/08/2026","imp":6.0,"fin":5.0,"sep":5.0,"conf":5.0,"expvol":6.0},{"data":"14/08/2026","imp":7.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":8.0},{"data":"15/08/2026","imp":6.0,"fin":0,"sep":1.0,"conf":0,"expvol":0},{"data":"16/08/2026","imp":4.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"17/08/2026","imp":4.0,"fin":17.0,"sep":16.0,"conf":17.0,"expvol":17.0},{"data":"18/08/2026","imp":21.0,"fin":3.0,"sep":8.0,"conf":3.0,"expvol":3.0},{"data":"19/08/2026","imp":6.0,"fin":23.0,"sep":18.0,"conf":23.0,"expvol":17.0},{"data":"20/08/2026","imp":11.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":5.0},{"data":"21/08/2026","imp":4.0,"fin":8.0,"sep":8.0,"conf":8.0,"expvol":6.0},{"data":"22/08/2026","imp":9.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"23/08/2026","imp":35.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"24/08/2026","imp":25.0,"fin":60.0,"sep":60.0,"conf":60.0,"expvol":19.0},{"data":"25/08/2026","imp":9.0,"fin":13.0,"sep":16.0,"conf":13.0,"expvol":16.0},{"data":"26/08/2026","imp":24.0,"fin":14.0,"sep":11.0,"conf":14.0,"expvol":11.0},{"data":"27/08/2026","imp":1.0,"fin":19.0,"sep":19.0,"conf":19.0,"expvol":9.0},{"data":"28/08/2026","imp":13.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":3.0},{"data":"29/08/2026","imp":2.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"30/08/2026","imp":5.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"31/08/2026","imp":30.0,"fin":14.0,"sep":14.0,"conf":14.0,"expvol":10.0},{"data":"01/09/2026","imp":19.0,"fin":45.0,"sep":45.0,"conf":45.0,"expvol":0},{"data":"02/09/2026","imp":0,"fin":4.0,"sep":4.0,"conf":4.0,"expvol":0},{"data":"03/09/2026","imp":0,"fin":0,"sep":0,"conf":0,"expvol":28.0}],
-    byM:         {"07/26":{"imp":206,"exp":191,"nfs":191},"08/26":{"imp":294.0,"exp":205.0,"nfs":205},"09/26":{"imp":19.0,"exp":13.0,"nfs":13}},
-    ag_fin:      {"jul/26":[79.1,19.4,1.5,0.0,0.0,0.0],"ago/26":[78.6,20.7,0.7,0.0,0.0,0.0],"set/26":[47.4,31.6,21.1,0.0,0.0,0.0]},
-    ag_exp:      {"jul/26":[90.3,8.7,0.5,0.5,0.0,0.0],"ago/26":[70.5,28.4,1.1,0.0,0.0,0.0],"set/26":[0.0,0.0,0.0,0.0,92.9,7.1]},
-    ag_fin_raw:  {"jul/26":{"tot":206,"bins":[163,40,3,0,0,0]},"ago/26":{"tot":294,"bins":[231,61,2,0,0,0]},"set/26":{"tot":19.0,"bins":[9.0,6.0,4.0,0,0,0]}},
-    ag_exp_raw:  {"jul/26":{"tot":206,"bins":[186,18,1,1,0,0]},"ago/26":{"tot":264,"bins":[186,75,3,0,0,0]},"set/26":{"tot":28.0,"bins":[0,0,0,0,26.0,2.0]}},
-    den24:       519.0,
-    fora24:      0.0,
-    tot_sla:     519.0,
-    saldo_sep:   0.0,
-    saldo_conf:  0.0,
-    last_date:  "03/09/2026",
-    last_ts:    "2026-09-03"
-  }
-};
-let CANAL  = 'TIKTOK';
-let CH     = {};
-let PERIOD = {mode:'30d', from:null, to:null};
 
-// ── UTILS ────────────────────────────────────────────────────────────────
-const fmt = n => Math.round(n).toLocaleString('pt-BR');
-const mn  = mm => ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][(+mm)-1]||mm;
-function kc(id){ if(CH[id]){CH[id].destroy();delete CH[id];} }
-function showToast(msg,d=4000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
-function sortD(arr){ return [...arr].sort((a,b)=>{ const[da,ma,ya]=a.data.split('/');const[db,mb,yb]=b.data.split('/'); return new Date(+ya,+ma-1,+da)-new Date(+yb,+mb-1,+db); }); }
-function sortMM(keys){ return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):(+ma)-(+mb); }); }
-function sortMes(keys){ const o=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):o.indexOf(ma)-o.indexOf(mb); }); }
-function toDate(s){ const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d); }
+// ── CLOUD SYNC (JSONBin) ────────────────────────────────────────────────
+const _JKEY = '$2a$10$Fjcx/uDvAXHbecDl5FaoRel8eMdbyJLqnVHIVngdf/ZBon/L9jAJm';
+const _JURL = 'https://api.jsonbin.io/v3/b/6aa1997bac6210605ab9107b';
 
-// ── PERÍODO ──────────────────────────────────────────────────────────────
-function inRange(dateStr){
-  const d=toDate(dateStr);
-  const allD=sortD(MKT_DATA[CANAL].an);
-  const last=allD.length?toDate(allD[allD.length-1].data):new Date();
-  if(PERIOD.mode==='7d'){ const r=new Date(last); r.setDate(r.getDate()-6); return d>=r; }
-  if(PERIOD.mode==='14d'){ const r=new Date(last); r.setDate(r.getDate()-13); return d>=r; }
-  if(PERIOD.mode==='30d'){ const r=new Date(last); r.setDate(r.getDate()-29); return d>=r; }
-  if(PERIOD.mode==='mes'){ const s=document.getElementById('date-from').value,e=document.getElementById('date-to').value; const sd=s?new Date(s):null,ed=e?new Date(e):null; if(sd&&d<sd)return false; if(ed&&d>ed)return false; return true; }
-  if(PERIOD.mode==='custom'){ const sd=PERIOD.from?new Date(PERIOD.from):null,ed=PERIOD.to?new Date(PERIOD.to):null; if(sd&&d<sd)return false; if(ed&&d>ed)return false; return true; }
-  return true;
+async function cloudLoad() {
+  try {
+    const r = await fetch(_JURL + '/latest', {
+      headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false'}
+    });
+    if (!r.ok) { console.warn('[Cloud] load failed:', r.status); return null; }
+    const j = await r.json();
+    console.log('[Cloud] loaded OK, data:', j.record ? 'present' : 'null');
+    return j.record && j.record.data ? j.record.data : null;
+  } catch(e) { console.warn('[Cloud] load error:', e); return null; }
+}
+
+async function cloudSave(data) {
+  try {
+    const r = await fetch(_JURL, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json', 'X-Master-Key': _JKEY},
+      body: JSON.stringify({data})
+    });
+    if (!r.ok) { console.warn('[Cloud] save failed:', r.status); return; }
+    console.log('[Cloud] saved OK');
+  } catch(e) { console.warn('[Cloud] save error:', e); }
 }
 function setPeriod(mode,btn){
   PERIOD.mode=mode;
@@ -681,7 +664,8 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
       });
       document.getElementById('csv-lbl').textContent=f.name+' · '+Object.keys(canais).join(', ')+' · '+new Date().toLocaleDateString('pt-BR');
       buildCanais(); renderAll();
-      showToast('✅ '+f.name+' importado');
+      cloudSave(MKT_DATA);
+      showToast('✅ ' + f.name + ' salvo na nuvem');
     }catch(err){ showToast('❌ '+err.message,6000); console.error(err); }
   };
   rd.readAsText(f,'latin1'); this.value='';
@@ -732,8 +716,18 @@ function toggleMobileMenu(){
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=document.getElementById('sidebar'),ov=document.getElementById('mobile-overlay'),btn=document.getElementById('mobile-menu-btn'); sb&&sb.classList.remove('open'); ov&&ov.classList.remove('show'); btn&&btn.classList.remove('open'); document.body.style.overflow=''; } });
 
 // ── INIT ─────────────────────────────────────────────────────────────────
-buildCanais();
-renderAll();
+(async function(){
+  const saved = await cloudLoad();
+  if (saved) {
+    try {
+      Object.keys(saved).forEach(c => { MKT_DATA[c] = saved[c]; });
+      CANAL = Object.keys(MKT_DATA)[0] || CANAL;
+      console.log('[Cloud] MKT restaurado ✓');
+    } catch(e) { console.warn('[Cloud] restore error:', e); }
+  }
+  buildCanais();
+  renderAll();
+})();
 </script>
 </body>
 </html>
