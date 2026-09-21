@@ -1792,33 +1792,44 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){
   document.body.style.overflow='';
 }});
 
-(async function(){
-  const saved = await cloudLoad();
-  if (saved) {
-    try {
-      if (saved.DYN_D) { DYN_D = saved.DYN_D; }
-      if (saved.ST)    ST  = saved.ST;
-      if (saved.IM)    IM  = Object.assign({}, IM, saved.IM);
-      if (saved.AG) {
-        const hf = ['abr/25','mai/25','jun/25','jul/25','ago/25','set/25','out/25','nov/25','dez/25',
-                    'jan/26','fev/26','mar/26','abr/26','mai/26','jun/26','jul/26','ago/26'];
-        ['b2b_fin','d2c_fin','b2b_exp','d2c_exp'].forEach(t => {
-          Object.keys(saved.AG[t] || {}).forEach(k => { if (!hf.includes(k)) AG[t][k] = saved.AG[t][k]; });
-        });
-      }
-      if (saved.TRB) {
-        const ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
-        Object.keys(saved.TRB).forEach(k => { if (!ht.includes(k)) TRB[k] = saved.TRB[k]; });
-      }
-      if (saved.lbl && document.getElementById('update-txt'))
-        document.getElementById('update-txt').textContent = saved.lbl;
-      D = buildD();
-      console.log('[Cloud] DRK restaurado ✓');
-    } catch(e) { console.warn('[Cloud] restore error:', e); }
-  }
-  if (document.readyState === 'complete') renderAll();
-  else window.addEventListener('load', renderAll);
-})();
+function initApp() {
+  // Sempre inicializa os dados embutidos primeiro
+  D = buildD();
+  // Depois tenta carregar da nuvem por cima
+  cloudLoad().then(function(saved) {
+    if (saved) {
+      try {
+        if (saved.DYN_D) { DYN_D = saved.DYN_D; D = buildD(); }
+        if (saved.ST)    ST  = saved.ST;
+        if (saved.IM)    IM  = Object.assign({}, IM, saved.IM);
+        if (saved.AG) {
+          const hf = ['abr/25','mai/25','jun/25','jul/25','ago/25','set/25','out/25','nov/25','dez/25',
+                      'jan/26','fev/26','mar/26','abr/26','mai/26','jun/26','jul/26','ago/26'];
+          ['b2b_fin','d2c_fin','b2b_exp','d2c_exp'].forEach(function(t) {
+            Object.keys(saved.AG[t] || {}).forEach(function(k) {
+              if (!hf.includes(k)) AG[t][k] = saved.AG[t][k];
+            });
+          });
+        }
+        if (saved.TRB) {
+          const ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
+          Object.keys(saved.TRB).forEach(function(k) {
+            if (!ht.includes(k)) TRB[k] = saved.TRB[k];
+          });
+        }
+        if (saved.lbl && document.getElementById('update-txt'))
+          document.getElementById('update-txt').textContent = saved.lbl;
+        D = buildD();
+        console.log('[Cloud] DRK restaurado ✓');
+        renderAll(); // re-renderiza com dados da nuvem
+      } catch(e) { console.warn('[Cloud] restore error:', e); }
+    }
+  }).catch(function(e) { console.warn('[Cloud] não disponível:', e); });
+  // Renderiza imediatamente com dados embutidos (não espera a nuvem)
+  renderAll();
+}
+if (document.readyState === 'complete') initApp();
+else window.addEventListener('load', initApp);
 
 
 </script>

@@ -646,26 +646,31 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=
 
 // ── INIT ───────────────────────────────────────────────────────────────
 function renderAll(){ renderResumo(); renderAnalitico(); }
-(async function(){
-  const saved = await cloudLoad();
-  if (saved) {
-    try {
-      if (saved.D)   D   = saved.D;
-      if (saved.AG)  AG  = saved.AG;
-      if (saved.IM)  IM  = saved.IM;
-      if (saved.ST)  ST  = saved.ST;
-      if (saved.lbl) document.getElementById('csv-lbl').textContent = saved.lbl;
-      const allS = D.slice().sort((a,b) => toDate(a.data) - toDate(b.data));
-      LAST_DATE  = allS.length ? allS[allS.length-1].data : '';
-      const last = allS[allS.length-1] || {};
-      SALDO_SEP  = last.sep  || 0;
-      SALDO_CONF = last.conf || 0;
-      console.log('[Cloud] WISH restaurado ✓');
-    } catch(e) { console.warn('[Cloud] restore error:', e); }
-  }
-  if (document.readyState === 'complete') renderAll();
-  else window.addEventListener('load', renderAll);
-})();
+function initApp() {
+  // Renderiza imediatamente com dados embutidos
+  renderAll();
+  // Depois tenta carregar da nuvem por cima
+  cloudLoad().then(function(saved) {
+    if (saved) {
+      try {
+        if (saved.D)   D   = saved.D;
+        if (saved.AG)  AG  = saved.AG;
+        if (saved.IM)  IM  = saved.IM;
+        if (saved.ST)  ST  = saved.ST;
+        if (saved.lbl) document.getElementById('csv-lbl').textContent = saved.lbl;
+        var allS = D.slice().sort(function(a,b){ return toDate(a.data)-toDate(b.data); });
+        LAST_DATE  = allS.length ? allS[allS.length-1].data : '';
+        var last   = allS[allS.length-1] || {};
+        SALDO_SEP  = last.sep  || 0;
+        SALDO_CONF = last.conf || 0;
+        console.log('[Cloud] WISH restaurado ✓');
+        renderAll();
+      } catch(e) { console.warn('[Cloud] restore error:', e); }
+    }
+  }).catch(function(e) { console.warn('[Cloud] não disponível:', e); });
+}
+if (document.readyState === 'complete') initApp();
+else window.addEventListener('load', initApp);
 </script>
 </body>
 </html>

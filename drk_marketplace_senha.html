@@ -716,18 +716,25 @@ function toggleMobileMenu(){
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=document.getElementById('sidebar'),ov=document.getElementById('mobile-overlay'),btn=document.getElementById('mobile-menu-btn'); sb&&sb.classList.remove('open'); ov&&ov.classList.remove('show'); btn&&btn.classList.remove('open'); document.body.style.overflow=''; } });
 
 // ── INIT ─────────────────────────────────────────────────────────────────
-(async function(){
-  const saved = await cloudLoad();
-  if (saved) {
-    try {
-      Object.keys(saved).forEach(c => { MKT_DATA[c] = saved[c]; });
-      CANAL = Object.keys(MKT_DATA)[0] || CANAL;
-      console.log('[Cloud] MKT restaurado ✓');
-    } catch(e) { console.warn('[Cloud] restore error:', e); }
-  }
+function initApp() {
+  // Renderiza imediatamente com dados embutidos
   buildCanais();
   renderAll();
-})();
+  // Depois tenta carregar da nuvem por cima
+  cloudLoad().then(function(saved) {
+    if (saved) {
+      try {
+        Object.keys(saved).forEach(function(c) { MKT_DATA[c] = saved[c]; });
+        CANAL = Object.keys(MKT_DATA)[0] || CANAL;
+        console.log('[Cloud] MKT restaurado ✓');
+        buildCanais();
+        renderAll();
+      } catch(e) { console.warn('[Cloud] restore error:', e); }
+    }
+  }).catch(function(e) { console.warn('[Cloud] não disponível:', e); });
+}
+if (document.readyState === 'complete') initApp();
+else window.addEventListener('load', initApp);
 </script>
 </body>
 </html>
