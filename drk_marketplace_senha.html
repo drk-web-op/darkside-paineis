@@ -168,13 +168,11 @@ tr.highlight{background:#f0f4ff}
 <style id="login-style">
 #login-screen{position:fixed;inset:0;background:#f5f4f0;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .login-box{background:#fff;border:1px solid #e5e4de;border-radius:16px;padding:40px 36px;width:340px;max-width:90vw;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.login-icon{margin-bottom:14px}
-.login-title{font-size:16px;font-weight:700;color:#1a1a18;margin-bottom:4px}
+.login-icon{margin-bottom:14px}.login-title{font-size:16px;font-weight:700;color:#1a1a18;margin-bottom:4px}
 .login-sub{font-size:12px;color:#6b6b68;margin-bottom:24px}
 .login-input{width:100%;padding:11px 14px;font-size:14px;border:1px solid #d4d3ce;border-radius:10px;background:#f5f4f0;color:#1a1a18;outline:none;text-align:center;letter-spacing:.08em;transition:border .2s}
 .login-input:focus{border-color:#7C3AED}
-.login-btn{width:100%;margin-top:12px;padding:11px;font-size:13px;font-weight:600;background:#7C3AED;color:#fff;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s}
-.login-btn:hover{opacity:.88}
+.login-btn{width:100%;margin-top:12px;padding:11px;font-size:13px;font-weight:600;background:#7C3AED;color:#fff;border:none;border-radius:10px;cursor:pointer}
 .login-error{font-size:11px;color:#E24B4A;margin-top:8px;min-height:16px}
 </style>
 </head>
@@ -184,18 +182,14 @@ tr.highlight{background:#f0f4ff}
     <div class="login-icon"><img src="data:image/png;base64,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" style="width:64px;height:64px;object-fit:contain;background:#1a1a18;border-radius:12px;padding:8px"></div>
     <div class="login-title">Darkside · Marketplace</div>
     <div class="login-sub">Acesso restrito · equipe interna</div>
-    <input class="login-input" id="pwd-input" type="password" placeholder="Digite a senha"
-           onkeydown="if(event.key==='Enter')checkPwd()">
+    <input class="login-input" id="pwd-input" type="password" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')checkPwd()">
     <button class="login-btn" onclick="checkPwd()">Entrar</button>
     <div class="login-error" id="pwd-error"></div>
   </div>
 </div>
 <script id="login-script">
 (function(){
-  if(sessionStorage.getItem('auth_mkt')==='1'){
-    document.getElementById('login-screen').style.display='none';
-    return;
-  }
+  if(sessionStorage.getItem('auth_mkt')==='1'){document.getElementById('login-screen').style.display='none';return;}
   document.body.style.overflow='hidden';
 })();
 function checkPwd(){
@@ -204,7 +198,7 @@ function checkPwd(){
     document.getElementById('login-screen').style.display='none';
     document.body.style.overflow='';
   }else{
-    document.getElementById('pwd-error').textContent='Senha incorreta. Tente novamente.';
+    document.getElementById('pwd-error').textContent='Senha incorreta.';
     document.getElementById('pwd-input').value='';
     document.getElementById('pwd-input').focus();
     setTimeout(()=>document.getElementById('pwd-error').textContent='',2500);
@@ -367,21 +361,18 @@ function checkPwd(){
 <div id="toast"></div>
 
 <script>
-
-// ── CLOUD SYNC (JSONBin) ────────────────────────────────────────────────
+// ── CLOUD SYNC ──────────────────────────────────────────────────────────
 const _JKEY = '$2a$10$Fjcx/uDvAXHbecDl5FaoRel8eMdbyJLqnVHIVngdf/ZBon/L9jAJm';
 const _JURL = 'https://api.jsonbin.io/v3/b/6aa1997bac6210605ab9107b';
 
 async function cloudLoad() {
   try {
     const r = await fetch(_JURL + '/latest', {
-      method: 'GET',
-      mode: 'cors',
+      method: 'GET', mode: 'cors',
       headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false', 'Content-Type': 'application/json'}
     });
     if (!r.ok) { console.warn('[Cloud] load failed:', r.status); return null; }
     const j = await r.json();
-    console.log('[Cloud] loaded OK, data:', j.record ? 'present' : 'null');
     return j.record && j.record.data ? j.record.data : null;
   } catch(e) { console.warn('[Cloud] load error:', e); return null; }
 }
@@ -389,14 +380,59 @@ async function cloudLoad() {
 async function cloudSave(data) {
   try {
     const r = await fetch(_JURL, {
-      method: 'PUT',
-      mode: 'cors',
+      method: 'PUT', mode: 'cors',
       headers: {'Content-Type': 'application/json', 'X-Master-Key': _JKEY},
       body: JSON.stringify({data})
     });
-    if (!r.ok) { console.warn('[Cloud] save failed:', r.status); return; }
-    console.log('[Cloud] saved OK');
+    if (!r.ok) console.warn('[Cloud] save failed:', r.status);
+    else console.log('[Cloud] saved OK');
   } catch(e) { console.warn('[Cloud] save error:', e); }
+}
+
+// ── DADOS ────────────────────────────────────────────────────────────────
+let MKT_DATA = {
+  TIKTOK: {
+    daily:       [{"data":"01/07/2026","imp":1,"exp":1,"nfs":1},{"data":"02/07/2026","imp":6,"exp":6,"nfs":6},{"data":"03/07/2026","imp":6,"exp":6,"nfs":6},{"data":"04/07/2026","imp":6,"exp":6,"nfs":6},{"data":"05/07/2026","imp":5,"exp":5,"nfs":5},{"data":"06/07/2026","imp":4,"exp":4,"nfs":4},{"data":"07/07/2026","imp":1,"exp":1,"nfs":1},{"data":"08/07/2026","imp":7,"exp":7,"nfs":7},{"data":"09/07/2026","imp":13,"exp":11,"nfs":11},{"data":"14/07/2026","imp":55,"exp":46,"nfs":46},{"data":"15/07/2026","imp":6,"exp":6,"nfs":6},{"data":"16/07/2026","imp":5,"exp":5,"nfs":5},{"data":"17/07/2026","imp":5,"exp":5,"nfs":5},{"data":"18/07/2026","imp":5,"exp":5,"nfs":5},{"data":"19/07/2026","imp":5,"exp":5,"nfs":5},{"data":"20/07/2026","imp":16,"exp":16,"nfs":16},{"data":"21/07/2026","imp":8,"exp":7,"nfs":7},{"data":"22/07/2026","imp":7,"exp":7,"nfs":7},{"data":"23/07/2026","imp":6,"exp":6,"nfs":6},{"data":"24/07/2026","imp":9,"exp":9,"nfs":9},{"data":"25/07/2026","imp":2,"exp":2,"nfs":2},{"data":"26/07/2026","imp":5,"exp":5,"nfs":5},{"data":"27/07/2026","imp":6,"exp":6,"nfs":6},{"data":"28/07/2026","imp":3,"exp":2,"nfs":2},{"data":"29/07/2026","imp":6,"exp":6,"nfs":6},{"data":"30/07/2026","imp":5,"exp":3,"nfs":3},{"data":"31/07/2026","imp":3,"exp":3,"nfs":3},{"data":"01/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"02/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"03/08/2026","imp":3.0,"exp":3.0,"nfs":3},{"data":"04/08/2026","imp":6.0,"exp":5.0,"nfs":5},{"data":"05/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"06/08/2026","imp":11.0,"exp":11.0,"nfs":11},{"data":"07/08/2026","imp":19.0,"exp":15.0,"nfs":15},{"data":"08/08/2026","imp":7.0,"exp":6.0,"nfs":6},{"data":"09/08/2026","imp":7.0,"exp":7.0,"nfs":7},{"data":"10/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"11/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"12/08/2026","imp":5.0,"exp":4.0,"nfs":4},{"data":"13/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"14/08/2026","imp":7.0,"exp":7.0,"nfs":7},{"data":"15/08/2026","imp":6.0,"exp":6.0,"nfs":6},{"data":"16/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"17/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"18/08/2026","imp":21.0,"exp":18.0,"nfs":18},{"data":"19/08/2026","imp":6.0,"exp":4.0,"nfs":4},{"data":"20/08/2026","imp":11.0,"exp":7.0,"nfs":7},{"data":"21/08/2026","imp":4.0,"exp":4.0,"nfs":4},{"data":"22/08/2026","imp":9.0,"exp":6.0,"nfs":6},{"data":"23/08/2026","imp":35.0,"exp":20.0,"nfs":20},{"data":"24/08/2026","imp":25.0,"exp":10.0,"nfs":10},{"data":"25/08/2026","imp":9.0,"exp":6.0,"nfs":6},{"data":"26/08/2026","imp":24.0,"exp":9.0,"nfs":9},{"data":"27/08/2026","imp":1.0,"exp":1.0,"nfs":1},{"data":"28/08/2026","imp":13.0,"exp":7.0,"nfs":7},{"data":"29/08/2026","imp":2.0,"exp":2.0,"nfs":2},{"data":"30/08/2026","imp":5.0,"exp":4.0,"nfs":4},{"data":"31/08/2026","imp":30.0,"exp":15.0,"nfs":15},{"data":"01/09/2026","imp":19.0,"exp":13.0,"nfs":13}],
+    an:          [{"data":"01/07/2026","imp":1,"fin":1,"sep":1,"conf":1,"expvol":1},{"data":"02/07/2026","imp":6,"fin":2,"sep":3,"conf":2,"expvol":2},{"data":"03/07/2026","imp":6,"fin":7,"sep":6,"conf":7,"expvol":6},{"data":"04/07/2026","imp":6,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"05/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"06/07/2026","imp":4,"fin":15,"sep":15,"conf":15,"expvol":16},{"data":"07/07/2026","imp":1,"fin":3,"sep":3,"conf":3,"expvol":3},{"data":"08/07/2026","imp":7,"fin":5,"sep":5,"conf":5,"expvol":3},{"data":"09/07/2026","imp":13,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"10/07/2026","imp":0,"fin":16,"sep":16,"conf":16,"expvol":16},{"data":"14/07/2026","imp":55,"fin":51,"sep":51,"conf":51,"expvol":42},{"data":"15/07/2026","imp":6,"fin":10,"sep":10,"conf":10,"expvol":10},{"data":"16/07/2026","imp":5,"fin":3,"sep":3,"conf":3,"expvol":2},{"data":"17/07/2026","imp":5,"fin":6,"sep":6,"conf":6,"expvol":5},{"data":"18/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"19/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"20/07/2026","imp":16,"fin":13,"sep":13,"conf":13,"expvol":15},{"data":"21/07/2026","imp":8,"fin":19,"sep":19,"conf":19,"expvol":18},{"data":"22/07/2026","imp":7,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"23/07/2026","imp":6,"fin":9,"sep":9,"conf":9,"expvol":9},{"data":"24/07/2026","imp":9,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"25/07/2026","imp":2,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"26/07/2026","imp":5,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"27/07/2026","imp":6,"fin":16,"sep":16,"conf":16,"expvol":16},{"data":"28/07/2026","imp":3,"fin":6,"sep":6,"conf":6,"expvol":5},{"data":"29/07/2026","imp":6,"fin":5,"sep":5,"conf":5,"expvol":5},{"data":"30/07/2026","imp":5,"fin":6,"sep":6,"conf":6,"expvol":2},{"data":"31/07/2026","imp":3,"fin":0,"sep":0,"conf":0,"expvol":2},{"data":"01/08/2026","imp":3.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"02/08/2026","imp":3.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"03/08/2026","imp":3.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":6.0},{"data":"04/08/2026","imp":6.0,"fin":4.0,"sep":7.0,"conf":4.0,"expvol":4.0},{"data":"05/08/2026","imp":6.0,"fin":7.0,"sep":7.0,"conf":7.0,"expvol":6.0},{"data":"06/08/2026","imp":11.0,"fin":10.0,"sep":10.0,"conf":10.0,"expvol":10.0},{"data":"07/08/2026","imp":19.0,"fin":6.0,"sep":3.0,"conf":6.0,"expvol":6.0},{"data":"08/08/2026","imp":7.0,"fin":18.0,"sep":18.0,"conf":18.0,"expvol":0},{"data":"09/08/2026","imp":7.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"10/08/2026","imp":1.0,"fin":15.0,"sep":15.0,"conf":15.0,"expvol":28.0},{"data":"11/08/2026","imp":1.0,"fin":0,"sep":1.0,"conf":0,"expvol":0},{"data":"12/08/2026","imp":5.0,"fin":4.0,"sep":3.0,"conf":4.0,"expvol":0},{"data":"13/08/2026","imp":6.0,"fin":5.0,"sep":5.0,"conf":5.0,"expvol":6.0},{"data":"14/08/2026","imp":7.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":8.0},{"data":"15/08/2026","imp":6.0,"fin":0,"sep":1.0,"conf":0,"expvol":0},{"data":"16/08/2026","imp":4.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"17/08/2026","imp":4.0,"fin":17.0,"sep":16.0,"conf":17.0,"expvol":17.0},{"data":"18/08/2026","imp":21.0,"fin":3.0,"sep":8.0,"conf":3.0,"expvol":3.0},{"data":"19/08/2026","imp":6.0,"fin":23.0,"sep":18.0,"conf":23.0,"expvol":17.0},{"data":"20/08/2026","imp":11.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":5.0},{"data":"21/08/2026","imp":4.0,"fin":8.0,"sep":8.0,"conf":8.0,"expvol":6.0},{"data":"22/08/2026","imp":9.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"23/08/2026","imp":35.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"24/08/2026","imp":25.0,"fin":60.0,"sep":60.0,"conf":60.0,"expvol":19.0},{"data":"25/08/2026","imp":9.0,"fin":13.0,"sep":16.0,"conf":13.0,"expvol":16.0},{"data":"26/08/2026","imp":24.0,"fin":14.0,"sep":11.0,"conf":14.0,"expvol":11.0},{"data":"27/08/2026","imp":1.0,"fin":19.0,"sep":19.0,"conf":19.0,"expvol":9.0},{"data":"28/08/2026","imp":13.0,"fin":6.0,"sep":6.0,"conf":6.0,"expvol":3.0},{"data":"29/08/2026","imp":2.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"30/08/2026","imp":5.0,"fin":0,"sep":0,"conf":0,"expvol":0},{"data":"31/08/2026","imp":30.0,"fin":14.0,"sep":14.0,"conf":14.0,"expvol":10.0},{"data":"01/09/2026","imp":19.0,"fin":45.0,"sep":45.0,"conf":45.0,"expvol":0},{"data":"02/09/2026","imp":0,"fin":4.0,"sep":4.0,"conf":4.0,"expvol":0},{"data":"03/09/2026","imp":0,"fin":0,"sep":0,"conf":0,"expvol":28.0}],
+    byM:         {"07/26":{"imp":206,"exp":191,"nfs":191},"08/26":{"imp":294.0,"exp":205.0,"nfs":205},"09/26":{"imp":19.0,"exp":13.0,"nfs":13}},
+    ag_fin:      {"jul/26":[79.1,19.4,1.5,0.0,0.0,0.0],"ago/26":[78.6,20.7,0.7,0.0,0.0,0.0],"set/26":[47.4,31.6,21.1,0.0,0.0,0.0]},
+    ag_exp:      {"jul/26":[90.3,8.7,0.5,0.5,0.0,0.0],"ago/26":[70.5,28.4,1.1,0.0,0.0,0.0],"set/26":[0.0,0.0,0.0,0.0,92.9,7.1]},
+    ag_fin_raw:  {"jul/26":{"tot":206,"bins":[163,40,3,0,0,0]},"ago/26":{"tot":294,"bins":[231,61,2,0,0,0]},"set/26":{"tot":19.0,"bins":[9.0,6.0,4.0,0,0,0]}},
+    ag_exp_raw:  {"jul/26":{"tot":206,"bins":[186,18,1,1,0,0]},"ago/26":{"tot":264,"bins":[186,75,3,0,0,0]},"set/26":{"tot":28.0,"bins":[0,0,0,0,26.0,2.0]}},
+    den24:       519.0,
+    fora24:      0.0,
+    tot_sla:     519.0,
+    saldo_sep:   0.0,
+    saldo_conf:  0.0,
+    last_date:  "03/09/2026",
+    last_ts:    "2026-09-03"
+  }
+};
+let CANAL  = 'TIKTOK';
+let CH     = {};
+let PERIOD = {mode:'30d', from:null, to:null};
+
+// ── UTILS ────────────────────────────────────────────────────────────────
+const fmt = n => Math.round(n).toLocaleString('pt-BR');
+const mn  = mm => ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][(+mm)-1]||mm;
+function kc(id){ if(CH[id]){CH[id].destroy();delete CH[id];} }
+function showToast(msg,d=4000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
+function sortD(arr){ return [...arr].sort((a,b)=>{ const[da,ma,ya]=a.data.split('/');const[db,mb,yb]=b.data.split('/'); return new Date(+ya,+ma-1,+da)-new Date(+yb,+mb-1,+db); }); }
+function sortMM(keys){ return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):(+ma)-(+mb); }); }
+function sortMes(keys){ const o=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return [...keys].sort((a,b)=>{ const[ma,ya]=a.split('/');const[mb,yb]=b.split('/'); return ya!==yb?ya.localeCompare(yb):o.indexOf(ma)-o.indexOf(mb); }); }
+function toDate(s){ const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d); }
+
+// ── PERÍODO ──────────────────────────────────────────────────────────────
+function inRange(dateStr){
+  const d=toDate(dateStr);
+  const allD=sortD(MKT_DATA[CANAL].an);
+  const last=allD.length?toDate(allD[allD.length-1].data):new Date();
+  if(PERIOD.mode==='7d'){ const r=new Date(last); r.setDate(r.getDate()-6); return d>=r; }
+  if(PERIOD.mode==='14d'){ const r=new Date(last); r.setDate(r.getDate()-13); return d>=r; }
+  if(PERIOD.mode==='30d'){ const r=new Date(last); r.setDate(r.getDate()-29); return d>=r; }
+  if(PERIOD.mode==='mes'){ const s=document.getElementById('date-from').value,e=document.getElementById('date-to').value; const sd=s?new Date(s):null,ed=e?new Date(e):null; if(sd&&d<sd)return false; if(ed&&d>ed)return false; return true; }
+  if(PERIOD.mode==='custom'){ const sd=PERIOD.from?new Date(PERIOD.from):null,ed=PERIOD.to?new Date(PERIOD.to):null; if(sd&&d<sd)return false; if(ed&&d>ed)return false; return true; }
+  return true;
 }
 function setPeriod(mode,btn){
   PERIOD.mode=mode;
@@ -667,7 +703,7 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
       });
       document.getElementById('csv-lbl').textContent=f.name+' · '+Object.keys(canais).join(', ')+' · '+new Date().toLocaleDateString('pt-BR');
       buildCanais(); renderAll();
-      cloudSave(MKT_DATA);
+      cloudSave(MKT_DATA).then(function(){ console.log('[Cloud] MKT saved'); });
       showToast('✅ ' + f.name + ' salvo na nuvem');
     }catch(err){ showToast('❌ '+err.message,6000); console.error(err); }
   };
@@ -702,7 +738,8 @@ document.getElementById('fi-backup').addEventListener('change',function(e){
       });
       document.getElementById('csv-lbl').textContent='Backup: '+f.name;
       buildCanais(); renderAll();
-      showToast('✅ Backup restaurado');
+      cloudSave(MKT_DATA);
+      showToast('✅ Backup restaurado · salvo na nuvem');
     }catch(err){ showToast('❌ Erro no backup: '+err.message,6000); }
   };
   rd.readAsText(f); this.value='';
@@ -719,20 +756,20 @@ function toggleMobileMenu(){
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=document.getElementById('sidebar'),ov=document.getElementById('mobile-overlay'),btn=document.getElementById('mobile-menu-btn'); sb&&sb.classList.remove('open'); ov&&ov.classList.remove('show'); btn&&btn.classList.remove('open'); document.body.style.overflow=''; } });
 
 // ── INIT ─────────────────────────────────────────────────────────────────
+// initApp: renderiza imediatamente, depois tenta nuvem
 function initApp() {
   buildCanais();
   renderAll();
   cloudLoad().then(function(saved) {
-    if (saved) {
-      try {
-        Object.keys(saved).forEach(function(c) { MKT_DATA[c] = saved[c]; });
-        CANAL = Object.keys(MKT_DATA)[0] || CANAL;
-        console.log('[Cloud] MKT restaurado ✓');
-        buildCanais();
-        renderAll();
-      } catch(e) { console.warn('[Cloud] restore error:', e); }
-    }
-  }).catch(function(e) { console.warn('[Cloud] não disponível:', e); });
+    if (!saved) return;
+    try {
+      Object.keys(saved).forEach(function(c) { MKT_DATA[c] = saved[c]; });
+      CANAL = Object.keys(MKT_DATA)[0] || CANAL;
+      buildCanais();
+      renderAll();
+      console.log('[Cloud] MKT restaurado');
+    } catch(e) { console.warn('[Cloud] restore error:', e); }
+  }).catch(function(e) { console.warn('[Cloud] indisponivel'); });
 }
 if (document.readyState === 'complete') initApp();
 else window.addEventListener('load', initApp);
