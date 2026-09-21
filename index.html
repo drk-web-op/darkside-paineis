@@ -1715,7 +1715,7 @@ function renderAll(){
 }
 
 // Restaura última importação do localStorage ao abrir
-(function restoreFromStorage() {
+function restoreFromStorage() {
   try {
     // Restaura meses que foram fechados automaticamente em sessões anteriores
     const histExtra = localStorage.getItem('darkside_hist_extra');
@@ -1766,7 +1766,8 @@ function renderAll(){
       if (savedLbl) document.getElementById('update-txt').textContent = savedLbl;
     }
   } catch(e) { console.warn('Erro ao restaurar localStorage:', e); }
-})();
+}
+
 
 // Aguarda todos os scripts (Chart.js etc) carregarem antes de renderizar
 // ── SIDEBAR MOBILE ───────────────────────────────────────────────────────
@@ -1793,40 +1794,50 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){
 }});
 
 function initApp() {
-  // Sempre inicializa os dados embutidos primeiro
-  D = buildD();
-  // Depois tenta carregar da nuvem por cima
-  cloudLoad().then(function(saved) {
-    if (saved) {
-      try {
-        if (saved.DYN_D) { DYN_D = saved.DYN_D; D = buildD(); }
-        if (saved.ST)    ST  = saved.ST;
-        if (saved.IM)    IM  = Object.assign({}, IM, saved.IM);
-        if (saved.AG) {
-          const hf = ['abr/25','mai/25','jun/25','jul/25','ago/25','set/25','out/25','nov/25','dez/25',
-                      'jan/26','fev/26','mar/26','abr/26','mai/26','jun/26','jul/26','ago/26'];
-          ['b2b_fin','d2c_fin','b2b_exp','d2c_exp'].forEach(function(t) {
-            Object.keys(saved.AG[t] || {}).forEach(function(k) {
-              if (!hf.includes(k)) AG[t][k] = saved.AG[t][k];
-            });
-          });
-        }
-        if (saved.TRB) {
-          const ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
-          Object.keys(saved.TRB).forEach(function(k) {
-            if (!ht.includes(k)) TRB[k] = saved.TRB[k];
-          });
-        }
-        if (saved.lbl && document.getElementById('update-txt'))
-          document.getElementById('update-txt').textContent = saved.lbl;
-        D = buildD();
-        console.log('[Cloud] DRK restaurado ✓');
-        renderAll(); // re-renderiza com dados da nuvem
-      } catch(e) { console.warn('[Cloud] restore error:', e); }
-    }
-  }).catch(function(e) { console.warn('[Cloud] não disponível:', e); });
-  // Renderiza imediatamente com dados embutidos (não espera a nuvem)
+  // 1. Restaura localStorage (seta D, ST, IM, AG, TRB)
+  restoreFromStorage();
+  // 2. Renderiza com o que temos (dados embutidos + localStorage)
   renderAll();
+  // 3. Em paralelo, tenta buscar dados mais recentes da nuvem
+  cloudLoad().then(function(saved) {
+    if (!saved) return;
+    try {
+      var changed = false;
+      if (saved.DYN_D) { DYN_D = saved.DYN_D; changed = true; }
+      if (saved.ST)    { ST = saved.ST; changed = true; }
+      if (saved.IM)    { IM = Object.assign({}, IM, saved.IM); changed = true; }
+      if (saved.AG) {
+        var hf = ['abr/25','mai/25','jun/25','jul/25','ago/25','set/25','out/25','nov/25','dez/25',
+                  'jan/26','fev/26','mar/26','abr/26','mai/26','jun/26','jul/26','ago/26'];
+        ['b2b_fin','d2c_fin','b2b_exp','d2c_exp'].forEach(function(t) {
+          Object.keys(saved.AG[t] || {}).forEach(function(k) {
+            if (!hf.includes(k)) { AG[t][k] = saved.AG[t][k]; changed = true; }
+          });
+        });
+      }
+      if (saved.TRB) {
+        var ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
+        Object.keys(saved.TRB).forEach(function(k) {
+          if (!ht.includes(k)) { TRB[k] = saved.TRB[k]; changed = true; }
+        });
+      }
+      if (saved.lbl) {
+        var el = document.getElementById('update-txt');
+        if (el) el.textContent = saved.lbl;
+      }
+      if (changed) {
+        // Reconstrói D com os novos dados
+        var mergedMap = {};
+        [...HIST_D, ...DYN_D].forEach(function(d) { mergedMap[d.data] = d; });
+        D = Object.values(mergedMap).sort(function(a,b){
+          var pa=a.data.split('/'),pb=b.data.split('/');
+          return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+        });
+        console.log('[Cloud] DRK restaurado ✓');
+        renderAll();
+      }
+    } catch(e) { console.warn('[Cloud] restore error:', e); }
+  }).catch(function(e) { console.warn('[Cloud] não disponível, usando dados locais'); });
 }
 if (document.readyState === 'complete') initApp();
 else window.addEventListener('load', initApp);
