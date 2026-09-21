@@ -375,7 +375,9 @@ const _JURL = 'https://api.jsonbin.io/v3/b/6aa1997bac6210605ab9107b';
 async function cloudLoad() {
   try {
     const r = await fetch(_JURL + '/latest', {
-      headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false'}
+      method: 'GET',
+      mode: 'cors',
+      headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false', 'Content-Type': 'application/json'}
     });
     if (!r.ok) { console.warn('[Cloud] load failed:', r.status); return null; }
     const j = await r.json();
@@ -388,6 +390,7 @@ async function cloudSave(data) {
   try {
     const r = await fetch(_JURL, {
       method: 'PUT',
+      mode: 'cors',
       headers: {'Content-Type': 'application/json', 'X-Master-Key': _JKEY},
       body: JSON.stringify({data})
     });
@@ -717,10 +720,8 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=
 
 // ── INIT ─────────────────────────────────────────────────────────────────
 function initApp() {
-  // Renderiza imediatamente com dados embutidos
   buildCanais();
   renderAll();
-  // Depois tenta carregar da nuvem por cima
   cloudLoad().then(function(saved) {
     if (saved) {
       try {
