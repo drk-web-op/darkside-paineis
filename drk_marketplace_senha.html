@@ -16,7 +16,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
 
 /* ── LAYOUT ── */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:200;overflow-y:auto}
 .main{margin-left:240px;min-height:100vh}
 .page{display:none;padding:28px 32px 48px}
 .page.active{display:block}
@@ -142,7 +142,7 @@ tr.highlight{background:#f0f4ff}
   .mobile-overlay{display:block;opacity:0;pointer-events:none;transition:opacity .25s}
   .mobile-overlay.show{opacity:1;pointer-events:auto}
   .sidebar{transform:translateX(-100%);transition:transform .28s ease;box-shadow:4px 0 20px rgba(0,0,0,.15)}
-  .sidebar.open{transform:translateX(0)}
+  .sidebar.open{transform:translateX(0);z-index:200}
   .main{margin-left:0;padding-top:48px}
   .page{padding:14px 12px 32px}
   .page-title{font-size:17px}

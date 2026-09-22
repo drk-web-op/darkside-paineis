@@ -27,7 +27,7 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
   /* Layout */
-  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; overflow: hidden; }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 200; overflow: hidden; }
   .sidebar-brand { padding: 14px 18px 12px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
   .brand-icon { width: 32px; height: 32px; background: var(--green); border-radius: var(--r); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
   .brand-icon i { color: #fff; font-size: 18px; }
@@ -247,7 +247,7 @@
     z-index: 200;
     box-shadow: 4px 0 20px rgba(0,0,0,.15);
   }
-  .sidebar.open { transform: translateX(0); }
+  .sidebar.open { transform: translateX(0); z-index: 200; }
 
   /* ── Main: ocupa tela toda, empurra 48px do topbar ── */
   .main { margin-left: 0 !important; padding-top: 48px; }
