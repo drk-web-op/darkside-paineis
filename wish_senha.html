@@ -364,18 +364,18 @@ function checkPwd(){
 
 <script>
 // ── CLOUD SYNC ──────────────────────────────────────────────────────────
-const _JKEY = '$2a$10$Fjcx/uDvAXHbecDl5FaoRel8eMdbyJLqnVHIVngdf/ZBon/L9jAJm';
+const _JKEY = '$2a$10$Q/SrR/1fCU3oPXIdJnOdWOjUTFmBDq3oMTp/dNhmflzkKrOVj8ndm';
 const _JURL = 'https://api.jsonbin.io/v3/b/6aa19983ffd5d16053f2b016';
 
 async function cloudLoad() {
   try {
     const r = await fetch(_JURL + '/latest', {
       method: 'GET', mode: 'cors',
-      headers: {'X-Master-Key': _JKEY, 'X-Bin-Meta': 'false', 'Content-Type': 'application/json'}
+      headers: {'X-Access-Key': _JKEY, 'X-Bin-Meta': 'false', 'Content-Type': 'application/json'}
     });
     if (!r.ok) { console.warn('[Cloud] load failed:', r.status); return null; }
     const j = await r.json();
-    return j.record && j.record.data ? j.record.data : null;
+    var rec = (j && j.record !== undefined) ? j.record : j; return rec && rec.data ? rec.data : null;
   } catch(e) { console.warn('[Cloud] load error:', e); return null; }
 }
 
@@ -383,7 +383,7 @@ async function cloudSave(data) {
   try {
     const r = await fetch(_JURL, {
       method: 'PUT', mode: 'cors',
-      headers: {'Content-Type': 'application/json', 'X-Master-Key': _JKEY},
+      headers: {'Content-Type': 'application/json', 'X-Access-Key': _JKEY},
       body: JSON.stringify({data})
     });
     if (!r.ok) console.warn('[Cloud] save failed:', r.status);
