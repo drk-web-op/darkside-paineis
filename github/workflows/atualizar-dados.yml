@@ -1,0 +1,109 @@
+name: Atualizar dados do Metabase
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # de hora em hora (horario UTC)
+  workflow_dispatch:       # botao "Run workflow" para atualizar na hora
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar tabela 72 (WMS Pedidos) do Metabase
+        env:
+          MB_URL: https://darkdata.darksidebooks.com.br
+          MB_TABLE: '72'
+          MB_USER: ${{ secrets.METABASE_USER }}
+          MB_PASS: ${{ secrets.METABASE_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, urllib.request, urllib.error, urllib.parse
+          from datetime import datetime, timedelta, timezone
+
+          base  = os.environ['MB_URL'].rstrip('/')
+          table = int(os.environ['MB_TABLE'])
+
+          if not os.environ.get('MB_USER') or not os.environ.get('MB_PASS'):
+              sys.exit('Secrets METABASE_USER / METABASE_PASSWORD nao cadastrados')
+
+          def call(method, path, body=None, form=None, token=None, accept='application/json'):
+              data, ctype = None, None
+              if form is not None:
+                  data, ctype = urllib.parse.urlencode(form).encode(), 'application/x-www-form-urlencoded'
+              elif body is not None:
+                  data, ctype = json.dumps(body).encode(), 'application/json'
+              req = urllib.request.Request(base + path, data=data, method=method)
+              if ctype: req.add_header('Content-Type', ctype)
+              req.add_header('Accept', accept)
+              if token: req.add_header('X-Metabase-Session', token)
+              try:
+                  with urllib.request.urlopen(req, timeout=300) as r:
+                      return r.read()
+              except urllib.error.HTTPError as e:
+                  detalhe = e.read()[:300].decode('utf-8', 'replace')
+                  sys.exit(f'Erro HTTP {e.code} em {path}: {detalhe}')
+              except Exception as e:
+                  sys.exit(f'Nao foi possivel acessar o Metabase pela internet: {e}')
+
+          # 1. Login (a senha nunca e impressa no log)
+          token = json.loads(call('POST', '/api/session',
+                  body={'username': os.environ['MB_USER'], 'password': os.environ['MB_PASS']}))['id']
+          print('Login OK')
+
+          # 2. Descobre banco e colunas da tabela
+          meta   = json.loads(call('GET', f'/api/table/{table}/query_metadata', token=token))
+          db_id  = meta['db_id']
+          fields = meta.get('fields', [])
+          print(f"Tabela: {meta.get('display_name')} | banco {db_id} | {len(fields)} colunas")
+          for f in fields:
+              print(f"  - {f.get('display_name')}  ({f.get('name')}, {f.get('base_type')})")
+
+          # 3. Filtro: do 1o dia do mes anterior em diante (pela coluna de importacao)
+          agora  = datetime.now(timezone(timedelta(hours=-3)))
+          ini    = (agora.replace(day=1) - timedelta(days=1)).replace(day=1).strftime('%Y-%m-%d')
+          def norm(s): return (s or '').lower().replace('ç','c').replace('ã','a').replace('í','i')
+          campo = next((f for f in fields
+                        if 'importad' in norm(f.get('display_name')) + norm(f.get('name'))
+                        and any(t in (f.get('base_type') or '') for t in ('Date', 'Time'))), None)
+
+          query = {'database': db_id, 'type': 'query', 'query': {'source-table': table}}
+          if campo:
+              query['query']['filter'] = ['>=', ['field', campo['id'], None], ini]
+              print(f"Filtro: {campo.get('display_name')} >= {ini}")
+          else:
+              print('AVISO: coluna de importacao nao encontrada - baixando a tabela inteira')
+
+          # 4. Exporta CSV
+          csv = call('POST', '/api/dataset/csv', form={'query': json.dumps(query)},
+                     token=token, accept='text/csv')
+          linhas = csv.count(b'\n')
+          if linhas < 2:
+              sys.exit('CSV veio vazio - nada foi salvo')
+
+          os.makedirs('dados', exist_ok=True)
+          with open('dados/wms_pedidos.csv', 'wb') as f:
+              f.write(csv)
+          print(f'OK: {linhas} linhas | {len(csv)/1e6:.1f} MB salvos em dados/wms_pedidos.csv')
+          PY
+
+      - name: Salvar no repositorio
+        run: |
+          git config user.name "robo-paineis"
+          git config user.email "robo-paineis@users.noreply.github.com"
+          git add dados/
+          if git diff --cached --quiet; then
+            echo "Sem mudancas nos dados desde a ultima execucao"
+          else
+            git commit -m "Dados Metabase $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M')"
+            git push
+          fi
