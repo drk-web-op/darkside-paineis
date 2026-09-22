@@ -610,7 +610,7 @@ function renderAll(){ renderResumo(); renderAnalitico(); }
 // ── CSV IMPORT ────────────────────────────────────────────────────────────
 document.getElementById('fi-csv').addEventListener('change',function(e){
   const f=e.target.files[0]; if(!f) return;
-  showToast('⏳ Processando CSV...');
+  if(!window.__AUTO_LOAD) showToast('⏳ Processando CSV...');
   const rd=new FileReader();
   rd.onload=ev=>{
     try{
@@ -703,9 +703,12 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
       });
       document.getElementById('csv-lbl').textContent=f.name+' · '+Object.keys(canais).join(', ')+' · '+new Date().toLocaleDateString('pt-BR');
       buildCanais(); renderAll();
-      cloudSave(MKT_DATA).then(function(){ console.log('[Cloud] MKT saved'); });
-      showToast('✅ ' + f.name + ' salvo na nuvem');
-    }catch(err){ showToast('❌ '+err.message,6000); console.error(err); }
+      if (window.__AUTO_LOAD) { window.__AUTO_LOAD = false; console.log('[Auto] dados do robô aplicados'); }
+      else {
+        cloudSave(Object.assign({__ts: Date.now()}, MKT_DATA)).then(function(){ console.log('[Cloud] MKT saved'); });
+        showToast('✅ ' + f.name + ' salvo na nuvem');
+      }
+    }catch(err){ if(window.__AUTO_LOAD){window.__AUTO_LOAD=false;console.warn('[Auto] erro:',err);} else showToast('❌ '+err.message,6000); console.error(err); }
   };
   rd.readAsText(f,'latin1'); this.value='';
 });
@@ -738,7 +741,7 @@ document.getElementById('fi-backup').addEventListener('change',function(e){
       });
       document.getElementById('csv-lbl').textContent='Backup: '+f.name;
       buildCanais(); renderAll();
-      cloudSave(MKT_DATA);
+      cloudSave(Object.assign({__ts: Date.now()}, MKT_DATA));
       showToast('✅ Backup restaurado · salvo na nuvem');
     }catch(err){ showToast('❌ Erro no backup: '+err.message,6000); }
   };
@@ -757,19 +760,50 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ const sb=
 
 // ── INIT ─────────────────────────────────────────────────────────────────
 // initApp: renderiza imediatamente, depois tenta nuvem
+
+// ── ATUALIZAÇÃO AUTOMÁTICA (robô Metabase → dados/darkside.csv) ─────────
+window.__AUTO_LOAD = false;
+function autoLoadCSV(cloudTs, inputId) {
+  return fetch('dados/darkside.csv?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var lm = Date.parse(r.headers.get('Last-Modified') || '') || Date.now();
+      if (cloudTs && lm < cloudTs) { console.log('[Auto] importação manual mais recente que o robô - mantida'); return null; }
+      return r.text().then(function(txt) { return {txt: txt, lm: lm}; });
+    })
+    .then(function(res) {
+      if (!res) return;
+      var d = new Date(res.lm), p = function(n){ return String(n).padStart(2,'0'); };
+      var nome = 'Metabase ' + p(d.getDate()) + '-' + p(d.getMonth()+1) + ' ' + p(d.getHours()) + 'h' + p(d.getMinutes()) + '.csv';
+      var dt = new DataTransfer();
+      dt.items.add(new File([res.txt], nome, {type: 'text/csv'}));
+      var inp = document.getElementById(inputId);
+      window.__AUTO_LOAD = true;
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change'));
+    })
+    .catch(function(e) { window.__AUTO_LOAD = false; console.warn('[Auto] dados automáticos indisponíveis:', e); });
+}
+// Mescla um trecho no que já está na nuvem (não apaga o resto)
+function cloudMerge(patch) {
+  return cloudLoad().then(function(cur) { return cloudSave(Object.assign({}, cur || {}, patch)); });
+}
+
 function initApp() {
   buildCanais();
   renderAll();
   cloudLoad().then(function(saved) {
+    window.__CLOUD_TS = (saved && saved.__ts) || 0;
     if (!saved) return;
     try {
-      Object.keys(saved).forEach(function(c) { MKT_DATA[c] = saved[c]; });
+      Object.keys(saved).forEach(function(c) { if (c.indexOf('__') !== 0) MKT_DATA[c] = saved[c]; });
       CANAL = Object.keys(MKT_DATA)[0] || CANAL;
       buildCanais();
       renderAll();
       console.log('[Cloud] MKT restaurado');
     } catch(e) { console.warn('[Cloud] restore error:', e); }
-  }).catch(function(e) { console.warn('[Cloud] indisponivel'); });
+  }).catch(function(e) { console.warn('[Cloud] indisponivel'); })
+    .then(function() { return autoLoadCSV(window.__CLOUD_TS || 0, 'fi-csv'); });
 }
 if (document.readyState === 'complete') initApp();
 else window.addEventListener('load', initApp);

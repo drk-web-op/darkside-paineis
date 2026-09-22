@@ -913,6 +913,12 @@ function saveFcEdit() {
     saved[mm] = {b2b, d2c, tot};
     localStorage.setItem('darkside_forecast', JSON.stringify(saved));
   } catch(e) {}
+  // Sincroniza o forecast com a equipe (nuvem)
+  cloudLoad().then(function(cur) {
+    cur = cur || {};
+    var fc = Object.assign({}, cur.FC || {}); fc[mm] = {b2b: b2b, d2c: d2c, tot: tot};
+    return cloudSave(Object.assign({}, cur, {FC: fc}));
+  }).then(function(){ console.log('[Cloud] forecast sincronizado'); });
   // Feedback
   const msg = document.getElementById('fc-edit-msg');
   msg.style.display = 'block';
@@ -1702,7 +1708,7 @@ document.getElementById('fi-backup').addEventListener('change', function(e) {
 
 document.getElementById('fi-inp').addEventListener('change',function(e){
   const f=e.target.files[0];if(!f)return;
-  document.getElementById('proc').classList.add('show');
+  if(!window.__AUTO_LOAD) document.getElementById('proc').classList.add('show');
   const ext=f.name.split('.').pop().toLowerCase();
   function finish(rows,label){
     try{
@@ -1730,7 +1736,7 @@ document.getElementById('fi-inp').addEventListener('change',function(e){
         });
       });
       // Merge TRB: preserva meses históricos, atualiza meses novos
-      const histTrbMonths=['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26','09/26','10/26','11/26','12/26'];
+      const histTrbMonths=['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
       Object.keys(transbordo).forEach(k=>{
         if(!histTrbMonths.includes(k)) TRB[k]=transbordo[k];
       });
@@ -1757,10 +1763,13 @@ document.getElementById('fi-inp').addEventListener('change',function(e){
       document.getElementById('update-txt').textContent = importLabel;
       document.getElementById('proc').classList.remove('show');
       renderAll();
-      cloudSave({DYN_D, ST, IM, AG, TRB, lbl: importLabel})
-        .then(function(){ showToast('✅ Importado e salvo na nuvem · ' + importLabel); })
-        .catch(function(){ showToast('✅ Importado (erro ao salvar na nuvem)'); });
-    }catch(err){document.getElementById('proc').classList.remove('show');alert('Erro: '+err.message);console.error(err);}
+      if (window.__AUTO_LOAD) { window.__AUTO_LOAD = false; console.log('[Auto] dados do robô aplicados: ' + importLabel); }
+      else {
+        cloudMerge({DYN_D, ST, IM, AG, TRB, lbl: importLabel, ts: Date.now()})
+          .then(function(){ showToast('✅ Importado e salvo na nuvem · ' + importLabel); })
+          .catch(function(){ showToast('✅ Importado (erro ao salvar na nuvem)'); });
+      }
+    }catch(err){document.getElementById('proc').classList.remove('show');if(window.__AUTO_LOAD){window.__AUTO_LOAD=false;console.warn('[Auto] erro:',err);}else{alert('Erro: '+err.message);}console.error(err);}
   }
   if(ext==='csv'){
     const rd=new FileReader();
@@ -1869,6 +1878,35 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){
   document.body.style.overflow='';
 }});
 
+
+// ── ATUALIZAÇÃO AUTOMÁTICA (robô Metabase → dados/darkside.csv) ─────────
+window.__AUTO_LOAD = false;
+function autoLoadCSV(cloudTs, inputId) {
+  return fetch('dados/darkside.csv?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var lm = Date.parse(r.headers.get('Last-Modified') || '') || Date.now();
+      if (cloudTs && lm < cloudTs) { console.log('[Auto] importação manual mais recente que o robô - mantida'); return null; }
+      return r.text().then(function(txt) { return {txt: txt, lm: lm}; });
+    })
+    .then(function(res) {
+      if (!res) return;
+      var d = new Date(res.lm), p = function(n){ return String(n).padStart(2,'0'); };
+      var nome = 'Metabase ' + p(d.getDate()) + '-' + p(d.getMonth()+1) + ' ' + p(d.getHours()) + 'h' + p(d.getMinutes()) + '.csv';
+      var dt = new DataTransfer();
+      dt.items.add(new File([res.txt], nome, {type: 'text/csv'}));
+      var inp = document.getElementById(inputId);
+      window.__AUTO_LOAD = true;
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change'));
+    })
+    .catch(function(e) { window.__AUTO_LOAD = false; console.warn('[Auto] dados automáticos indisponíveis:', e); });
+}
+// Mescla um trecho no que já está na nuvem (não apaga o resto)
+function cloudMerge(patch) {
+  return cloudLoad().then(function(cur) { return cloudSave(Object.assign({}, cur || {}, patch)); });
+}
+
 function initApp() {
   // 1. Restaura localStorage (inicializa D, ST, IM, AG, TRB)
   restoreFromStorage();
@@ -1876,9 +1914,19 @@ function initApp() {
   renderAll();
   // 3. Tenta carregar dados mais recentes da nuvem
   cloudLoad().then(function(saved) {
+    window.__CLOUD_TS = (saved && saved.ts) || 0;
     if (!saved) return;
     try {
       var changed = false;
+      if (saved.FC) {
+        var loc = {}; try { loc = JSON.parse(localStorage.getItem('darkside_forecast') || '{}'); } catch(e) {}
+        Object.keys(saved.FC).forEach(function(k) {
+          FC_MENSAL[k] = saved.FC[k]; loc[k] = saved.FC[k];
+          if (k.slice(3) === '26') FC_MENSAL[k.slice(0,2)] = saved.FC[k];
+        });
+        try { localStorage.setItem('darkside_forecast', JSON.stringify(loc)); } catch(e) {}
+        changed = true;
+      }
       if (saved.DYN_D) { DYN_D = saved.DYN_D; changed = true; }
       if (saved.ST)    { ST = saved.ST; changed = true; }
       if (saved.IM)    { IM = Object.assign({}, IM, saved.IM); changed = true; }
@@ -1892,7 +1940,7 @@ function initApp() {
         });
       }
       if (saved.TRB) {
-        var ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26','09/26','10/26','11/26','12/26'];
+        var ht = ['01/26','02/26','03/26','04/26','05/26','06/26','07/26','08/26'];
         Object.keys(saved.TRB).forEach(function(k) {
           if (!ht.includes(k)) { TRB[k] = saved.TRB[k]; changed = true; }
         });
@@ -1912,7 +1960,8 @@ function initApp() {
         renderAll();
       }
     } catch(e) { console.warn('[Cloud] restore error:', e); }
-  }).catch(function(e) { console.warn('[Cloud] não disponível, usando dados locais'); });
+  }).catch(function(e) { console.warn('[Cloud] não disponível, usando dados locais'); })
+    .then(function() { return autoLoadCSV(window.__CLOUD_TS || 0, 'fi-inp'); });
 }
 if (document.readyState === 'complete') initApp();
 else window.addEventListener('load', initApp);
