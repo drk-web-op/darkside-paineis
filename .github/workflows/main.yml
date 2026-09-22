@@ -22,9 +22,9 @@ jobs:
         env:
           MB_URL: https://darkdata.darksidebooks.com.br
           MB_TABLE: '72'
-          # Colunas liberadas para publicacao (nomes tecnicos separados por ;)
-          # Vazio = MODO DIAGNOSTICO: so lista as colunas, nao publica nada
-          COLUNAS: ''
+          # Somente colunas operacionais - NENHUM dado pessoal de cliente/motorista
+          COLUNAS: 'depositante;status_nf;classificacao_tipo_pedido;qtde_pecas;qtde_volumes;importado_em;separado_em;conferido_em;pesado_em;expedido_em'
+          CAMPO_DATA: 'updated_at'
           MB_USER: ${{ secrets.METABASE_USER }}
           MB_PASS: ${{ secrets.METABASE_PASSWORD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,7 +36,7 @@ jobs:
           $table = [int]$env:MB_TABLE
           if (-not $env:MB_USER -or -not $env:MB_PASS) { throw 'Secrets METABASE_USER / METABASE_PASSWORD nao cadastrados' }
 
-          # 1. Login no Metabase (a senha nunca aparece no log)
+          # 1. Login no Metabase
           $login = @{ username = $env:MB_USER; password = $env:MB_PASS } | ConvertTo-Json
           try {
             $token = (Invoke-RestMethod -Method Post -Uri "$base/api/session" -ContentType 'application/json' -Body $login -TimeoutSec 60).id
@@ -44,49 +44,47 @@ jobs:
           Write-Host 'Login OK'
           $mbh = @{ 'X-Metabase-Session' = $token }
 
-          # 2. Lista as colunas da tabela
-          $meta = Invoke-RestMethod -Uri "$base/api/table/$table/query_metadata" -Headers $mbh -TimeoutSec 60
-          Write-Host "Tabela: $($meta.display_name) | banco $($meta.db_id) | $($meta.fields.Count) colunas"
-          foreach ($f in $meta.fields) { Write-Host ("  - {0}  [{1}]  {2}" -f $f.display_name, $f.name, $f.base_type) }
-
+          # 2. Colunas
+          $meta   = Invoke-RestMethod -Uri "$base/api/table/$table/query_metadata" -Headers $mbh -TimeoutSec 60
           $wanted = @($env:COLUNAS -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-          if ($wanted.Count -eq 0) {
-            Write-Host ''
-            Write-Host 'MODO DIAGNOSTICO: nenhuma coluna liberada em COLUNAS - nada foi publicado.'
-            exit 0
-          }
-          $nomes = @($meta.fields | ForEach-Object { $_.name })
+          $nomes  = @($meta.fields | ForEach-Object { $_.name })
           $faltando = @($wanted | Where-Object { $nomes -notcontains $_ })
           if ($faltando.Count -gt 0) { throw "Colunas nao encontradas: $($faltando -join ', ')" }
-          $sel = @($meta.fields | Where-Object { $wanted -contains $_.name })
+          $sel    = @($wanted | ForEach-Object { $n = $_; $meta.fields | Where-Object { $_.name -eq $n } })
+          $fData  = $meta.fields | Where-Object { $_.name -eq $env:CAMPO_DATA } | Select-Object -First 1
+          $fStat  = $meta.fields | Where-Object { $_.name -eq 'status_nf' } | Select-Object -First 1
 
-          # 3. Consulta: so colunas liberadas, do 1o dia do mes anterior em diante
+          # 3. Filtro: atualizados desde o 1o dia do mes anterior OU ainda em aberto no WMS
           $agora = [DateTime]::UtcNow.AddHours(-3)
           $ini   = ([DateTime]::new($agora.Year, $agora.Month, 1)).AddMonths(-1).ToString('yyyy-MM-dd')
-          $campo = $meta.fields | Where-Object {
-                     ("$($_.display_name) $($_.name)").ToLower() -match 'importad' -and "$($_.base_type)" -match 'Date|Time'
-                   } | Select-Object -First 1
           $fieldsJson = ($sel | ForEach-Object { '["field",' + $_.id + ',null]' }) -join ','
-          $filterJson = ''
-          if ($campo) {
-            $filterJson = ',"filter":[">=",["field",' + $campo.id + ',null],"' + $ini + '"]'
-            Write-Host "Filtro: $($campo.display_name) >= $ini"
-          } else { Write-Host 'AVISO: coluna de importacao nao encontrada - sem filtro de data' }
-          $query = '{"database":' + $meta.db_id + ',"type":"query","query":{"source-table":' + $table + ',"fields":[' + $fieldsJson + ']' + $filterJson + '}}'
+          $filtro = '["or",[">=",["field",' + $fData.id + ',null],"' + $ini + '"],["!=",["field",' + $fStat.id + ',null],"EXPEDIDO","CANCELADA"]]'
+          $query  = '{"database":' + $meta.db_id + ',"type":"query","query":{"source-table":' + $table + ',"fields":[' + $fieldsJson + '],"filter":' + $filtro + '}}'
+          Write-Host "Filtro: $($env:CAMPO_DATA) >= $ini  OU  status em aberto"
 
           # 4. Exporta CSV
           $out = Join-Path $env:RUNNER_TEMP 'wms_pedidos.csv'
           Invoke-WebRequest -Method Post -Uri "$base/api/dataset/csv" -Headers $mbh `
             -ContentType 'application/x-www-form-urlencoded' -Body @{ query = $query } `
             -OutFile $out -UseBasicParsing -TimeoutSec 600
-          $bytes  = [IO.File]::ReadAllBytes($out)
-          $linhas = ([Text.Encoding]::UTF8.GetString($bytes) -split "`n").Count - 1
-          if ($linhas -lt 2) { throw 'CSV veio vazio - nada foi publicado' }
-          Write-Host ("OK: {0} linhas | {1:N1} MB" -f $linhas, ($bytes.Length / 1MB))
+          $rows = @(Import-Csv -Path $out -Encoding UTF8)
+          if ($rows.Count -lt 1) { throw 'CSV veio vazio - nada foi publicado' }
+          $colDep = ($rows[0].PSObject.Properties | Select-Object -First 1).Name
+          Write-Host ("OK: {0} pedidos baixados | colunas: {1}" -f $rows.Count, (($rows[0].PSObject.Properties | ForEach-Object { $_.Name }) -join ' | '))
 
-          # 5. Publica no repositorio pela API do GitHub (nao precisa de Git instalado)
+          # 5. Confere depositantes (esperado: so Darkside) e publica arquivo unico
+          foreach ($g in ($rows | Group-Object -Property $colDep)) { Write-Host ("  Depositante: {0} ({1} pedidos)" -f $g.Name, $g.Count) }
+          $ex = $rows[0]
+          Write-Host ("  exemplo: importado={0} | status={1} | classif={2} | pecas={3}" -f $ex.'Importado Em', $ex.'Status Nf', $ex.'Classificacao Tipo Pedido', $ex.'Qtde Pecas')
+          $classes = ($rows | Group-Object -Property 'Classificacao Tipo Pedido' | Sort-Object Count -Descending | ForEach-Object { "{0}={1}" -f $_.Name, $_.Count }) -join ' | '
+          Write-Host "  classificacoes: $classes"
+
+          $tmp = Join-Path $env:RUNNER_TEMP 'darkside.csv'
+          $rows | Export-Csv -Path $tmp -NoTypeInformation -Encoding UTF8
+          $bytes = [IO.File]::ReadAllBytes($tmp)
+
           $gh  = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'User-Agent' = 'robo-paineis' }
-          $api = "https://api.github.com/repos/$env:GH_REPO/contents/dados/wms_pedidos.csv"
+          $api = "https://api.github.com/repos/$env:GH_REPO/contents/dados/darkside.csv"
           $sha = $null
           try { $sha = (Invoke-RestMethod -Uri $api -Headers $gh).sha } catch { }
           $hdr = [Text.Encoding]::ASCII.GetBytes("blob $($bytes.Length)`0")
@@ -95,7 +93,7 @@ jobs:
           $blob = [BitConverter]::ToString([Security.Cryptography.SHA1]::Create().ComputeHash($ms.ToArray())).Replace('-', '').ToLower()
           if ($sha -eq $blob) { Write-Host 'Sem mudancas nos dados - nada a publicar'; exit 0 }
 
-          $body = @{ message = ('Dados Metabase ' + $agora.ToString('dd/MM/yyyy HH:mm')); content = [Convert]::ToBase64String($bytes) }
+          $body = @{ message = ('Dados Darkside ' + $agora.ToString('dd/MM/yyyy HH:mm')); content = [Convert]::ToBase64String($bytes) }
           if ($sha) { $body.sha = $sha }
           Invoke-RestMethod -Method Put -Uri $api -Headers $gh -ContentType 'application/json' -Body ($body | ConvertTo-Json) | Out-Null
-          Write-Host 'Publicado em dados/wms_pedidos.csv'
+          Write-Host ("Publicado em dados/darkside.csv ({0:N1} MB)" -f ($bytes.Length / 1MB))
