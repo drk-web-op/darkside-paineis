@@ -14,96 +14,88 @@ concurrency:
 
 jobs:
   atualizar:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted     # roda no computador da rede Darkside
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Baixar tabela 72 (WMS Pedidos) do Metabase
+      - name: Baixar WMS Pedidos do Metabase e publicar
+        shell: powershell
         env:
           MB_URL: https://darkdata.darksidebooks.com.br
           MB_TABLE: '72'
+          # Colunas liberadas para publicacao (nomes tecnicos separados por ;)
+          # Vazio = MODO DIAGNOSTICO: so lista as colunas, nao publica nada
+          COLUNAS: ''
           MB_USER: ${{ secrets.METABASE_USER }}
           MB_PASS: ${{ secrets.METABASE_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          python3 - <<'PY'
-          import json, os, sys, urllib.request, urllib.error, urllib.parse
-          from datetime import datetime, timedelta, timezone
+          $ErrorActionPreference = 'Stop'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          $base  = $env:MB_URL.TrimEnd('/')
+          $table = [int]$env:MB_TABLE
+          if (-not $env:MB_USER -or -not $env:MB_PASS) { throw 'Secrets METABASE_USER / METABASE_PASSWORD nao cadastrados' }
 
-          base  = os.environ['MB_URL'].rstrip('/')
-          table = int(os.environ['MB_TABLE'])
+          # 1. Login no Metabase (a senha nunca aparece no log)
+          $login = @{ username = $env:MB_USER; password = $env:MB_PASS } | ConvertTo-Json
+          try {
+            $token = (Invoke-RestMethod -Method Post -Uri "$base/api/session" -ContentType 'application/json' -Body $login -TimeoutSec 60).id
+          } catch { throw "Falha ao acessar/logar no Metabase: $($_.Exception.Message)" }
+          Write-Host 'Login OK'
+          $mbh = @{ 'X-Metabase-Session' = $token }
 
-          if not os.environ.get('MB_USER') or not os.environ.get('MB_PASS'):
-              sys.exit('Secrets METABASE_USER / METABASE_PASSWORD nao cadastrados')
+          # 2. Lista as colunas da tabela
+          $meta = Invoke-RestMethod -Uri "$base/api/table/$table/query_metadata" -Headers $mbh -TimeoutSec 60
+          Write-Host "Tabela: $($meta.display_name) | banco $($meta.db_id) | $($meta.fields.Count) colunas"
+          foreach ($f in $meta.fields) { Write-Host ("  - {0}  [{1}]  {2}" -f $f.display_name, $f.name, $f.base_type) }
 
-          def call(method, path, body=None, form=None, token=None, accept='application/json'):
-              data, ctype = None, None
-              if form is not None:
-                  data, ctype = urllib.parse.urlencode(form).encode(), 'application/x-www-form-urlencoded'
-              elif body is not None:
-                  data, ctype = json.dumps(body).encode(), 'application/json'
-              req = urllib.request.Request(base + path, data=data, method=method)
-              if ctype: req.add_header('Content-Type', ctype)
-              req.add_header('Accept', accept)
-              if token: req.add_header('X-Metabase-Session', token)
-              try:
-                  with urllib.request.urlopen(req, timeout=300) as r:
-                      return r.read()
-              except urllib.error.HTTPError as e:
-                  detalhe = e.read()[:300].decode('utf-8', 'replace')
-                  sys.exit(f'Erro HTTP {e.code} em {path}: {detalhe}')
-              except Exception as e:
-                  sys.exit(f'Nao foi possivel acessar o Metabase pela internet: {e}')
+          $wanted = @($env:COLUNAS -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+          if ($wanted.Count -eq 0) {
+            Write-Host ''
+            Write-Host 'MODO DIAGNOSTICO: nenhuma coluna liberada em COLUNAS - nada foi publicado.'
+            exit 0
+          }
+          $nomes = @($meta.fields | ForEach-Object { $_.name })
+          $faltando = @($wanted | Where-Object { $nomes -notcontains $_ })
+          if ($faltando.Count -gt 0) { throw "Colunas nao encontradas: $($faltando -join ', ')" }
+          $sel = @($meta.fields | Where-Object { $wanted -contains $_.name })
 
-          # 1. Login (a senha nunca e impressa no log)
-          token = json.loads(call('POST', '/api/session',
-                  body={'username': os.environ['MB_USER'], 'password': os.environ['MB_PASS']}))['id']
-          print('Login OK')
-
-          # 2. Descobre banco e colunas da tabela
-          meta   = json.loads(call('GET', f'/api/table/{table}/query_metadata', token=token))
-          db_id  = meta['db_id']
-          fields = meta.get('fields', [])
-          print(f"Tabela: {meta.get('display_name')} | banco {db_id} | {len(fields)} colunas")
-          for f in fields:
-              print(f"  - {f.get('display_name')}  ({f.get('name')}, {f.get('base_type')})")
-
-          # 3. Filtro: do 1o dia do mes anterior em diante (pela coluna de importacao)
-          agora  = datetime.now(timezone(timedelta(hours=-3)))
-          ini    = (agora.replace(day=1) - timedelta(days=1)).replace(day=1).strftime('%Y-%m-%d')
-          def norm(s): return (s or '').lower().replace('ç','c').replace('ã','a').replace('í','i')
-          campo = next((f for f in fields
-                        if 'importad' in norm(f.get('display_name')) + norm(f.get('name'))
-                        and any(t in (f.get('base_type') or '') for t in ('Date', 'Time'))), None)
-
-          query = {'database': db_id, 'type': 'query', 'query': {'source-table': table}}
-          if campo:
-              query['query']['filter'] = ['>=', ['field', campo['id'], None], ini]
-              print(f"Filtro: {campo.get('display_name')} >= {ini}")
-          else:
-              print('AVISO: coluna de importacao nao encontrada - baixando a tabela inteira')
+          # 3. Consulta: so colunas liberadas, do 1o dia do mes anterior em diante
+          $agora = [DateTime]::UtcNow.AddHours(-3)
+          $ini   = ([DateTime]::new($agora.Year, $agora.Month, 1)).AddMonths(-1).ToString('yyyy-MM-dd')
+          $campo = $meta.fields | Where-Object {
+                     ("$($_.display_name) $($_.name)").ToLower() -match 'importad' -and "$($_.base_type)" -match 'Date|Time'
+                   } | Select-Object -First 1
+          $fieldsJson = ($sel | ForEach-Object { '["field",' + $_.id + ',null]' }) -join ','
+          $filterJson = ''
+          if ($campo) {
+            $filterJson = ',"filter":[">=",["field",' + $campo.id + ',null],"' + $ini + '"]'
+            Write-Host "Filtro: $($campo.display_name) >= $ini"
+          } else { Write-Host 'AVISO: coluna de importacao nao encontrada - sem filtro de data' }
+          $query = '{"database":' + $meta.db_id + ',"type":"query","query":{"source-table":' + $table + ',"fields":[' + $fieldsJson + ']' + $filterJson + '}}'
 
           # 4. Exporta CSV
-          csv = call('POST', '/api/dataset/csv', form={'query': json.dumps(query)},
-                     token=token, accept='text/csv')
-          linhas = csv.count(b'\n')
-          if linhas < 2:
-              sys.exit('CSV veio vazio - nada foi salvo')
+          $out = Join-Path $env:RUNNER_TEMP 'wms_pedidos.csv'
+          Invoke-WebRequest -Method Post -Uri "$base/api/dataset/csv" -Headers $mbh `
+            -ContentType 'application/x-www-form-urlencoded' -Body @{ query = $query } `
+            -OutFile $out -UseBasicParsing -TimeoutSec 600
+          $bytes  = [IO.File]::ReadAllBytes($out)
+          $linhas = ([Text.Encoding]::UTF8.GetString($bytes) -split "`n").Count - 1
+          if ($linhas -lt 2) { throw 'CSV veio vazio - nada foi publicado' }
+          Write-Host ("OK: {0} linhas | {1:N1} MB" -f $linhas, ($bytes.Length / 1MB))
 
-          os.makedirs('dados', exist_ok=True)
-          with open('dados/wms_pedidos.csv', 'wb') as f:
-              f.write(csv)
-          print(f'OK: {linhas} linhas | {len(csv)/1e6:.1f} MB salvos em dados/wms_pedidos.csv')
-          PY
+          # 5. Publica no repositorio pela API do GitHub (nao precisa de Git instalado)
+          $gh  = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'User-Agent' = 'robo-paineis' }
+          $api = "https://api.github.com/repos/$env:GH_REPO/contents/dados/wms_pedidos.csv"
+          $sha = $null
+          try { $sha = (Invoke-RestMethod -Uri $api -Headers $gh).sha } catch { }
+          $hdr = [Text.Encoding]::ASCII.GetBytes("blob $($bytes.Length)`0")
+          $ms  = New-Object IO.MemoryStream
+          $ms.Write($hdr, 0, $hdr.Length); $ms.Write($bytes, 0, $bytes.Length)
+          $blob = [BitConverter]::ToString([Security.Cryptography.SHA1]::Create().ComputeHash($ms.ToArray())).Replace('-', '').ToLower()
+          if ($sha -eq $blob) { Write-Host 'Sem mudancas nos dados - nada a publicar'; exit 0 }
 
-      - name: Salvar no repositorio
-        run: |
-          git config user.name "robo-paineis"
-          git config user.email "robo-paineis@users.noreply.github.com"
-          git add dados/
-          if git diff --cached --quiet; then
-            echo "Sem mudancas nos dados desde a ultima execucao"
-          else
-            git commit -m "Dados Metabase $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M')"
-            git push
-          fi
+          $body = @{ message = ('Dados Metabase ' + $agora.ToString('dd/MM/yyyy HH:mm')); content = [Convert]::ToBase64String($bytes) }
+          if ($sha) { $body.sha = $sha }
+          Invoke-RestMethod -Method Put -Uri $api -Headers $gh -ContentType 'application/json' -Body ($body | ConvertTo-Json) | Out-Null
+          Write-Host 'Publicado em dados/wms_pedidos.csv'
