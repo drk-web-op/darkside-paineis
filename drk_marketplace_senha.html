@@ -238,6 +238,10 @@ function checkPwd(){
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="4" x2="9" y2="22"/></svg>
       Analítico diário
     </a>
+    <a class="nav-item" onclick="goPage('analitico-valor',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Analítico diário em R$
+    </a>
 
     <div class="nav-section">Marketplace</div>
     <div id="canal-nav"></div>
@@ -684,12 +688,17 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
       const cImp=ci(['importado em']),cPesa=ci(['pesado em']),cExp=ci(['expedido em']);
       const cSep=ci(['separado em']),cConf=ci(['conferido em']);
       const cPec=ci(['qtde pe']),cVol=ci(['qtde vol']),cClass=ci(['classifica']),cSt=ci(['status nf']);
+      const cVal=ci(['valor total']);
       if(!cImp||!cPec) throw new Error('Colunas essenciais não encontradas.');
       const mLL=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
       const FECHADOS_MKT=['mar/26','abr/26','mai/26','jun/26','jul/26','ago/26'];
       const canais={};
       function parseDt(v){ if(!v||String(v).trim()==='') return null; const s=String(v).trim(); const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/); if(m) return new Date(+m[3],+m[2]-1,+m[1],m[4]?+m[4]:12,m[5]?+m[5]:0); return null; }
       function toN(v){ return parseFloat(String(v||'').replace(',','.'))||0; }
+      function toMoney(v){ var t=String(v==null?'':v).replace(/[^0-9.,-]/g,'');
+        if(t.indexOf(',')>-1&&t.indexOf('.')>-1) t=t.replace(/\./g,'').replace(',','.');
+        else if(t.indexOf(',')>-1) t=t.replace(',','.');
+        var n=parseFloat(t); return isNaN(n)?0:n; }
       function fmtDate(d){ return d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear():null; }
       rows.forEach(row=>{
         const cl=String(row[cClass]||'').toUpperCase();
@@ -707,11 +716,12 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
         const c=canais[canal];
         c.daily[impK]=c.daily[impK]||{data:impK,imp:0,exp:0,nfs:0};
         c.daily[impK].imp+=pec; c.daily[impK].nfs+=1; if(expD) c.daily[impK].exp+=vol;
-        function addAn(dk,field,val){ if(!dk)return; c.an[dk]=c.an[dk]||{data:dk,imp:0,fin:0,sep:0,conf:0,expvol:0}; c.an[dk][field]+=val; }
-        addAn(impK,'imp',pec);
-        if(sepD) addAn(fmtDate(sepD),'sep',pec);
-        if(confD){ addAn(fmtDate(confD),'fin',pec); addAn(fmtDate(confD),'conf',pec); }
-        if(expD) addAn(fmtDate(expD),'expvol',vol);
+        function addAn(dk,field,val){ if(!dk)return; c.an[dk]=c.an[dk]||{data:dk,imp:0,fin:0,sep:0,conf:0,expvol:0,vimp:0,vfin:0,vsep:0,vconf:0,vexp:0}; c.an[dk][field]=(c.an[dk][field]||0)+val; }
+        const vlr=cVal?toMoney(row[cVal]):0;
+        addAn(impK,'imp',pec); addAn(impK,'vimp',vlr);
+        if(sepD){ addAn(fmtDate(sepD),'sep',pec); addAn(fmtDate(sepD),'vsep',vlr); }
+        if(confD){ addAn(fmtDate(confD),'fin',pec); addAn(fmtDate(confD),'conf',pec); addAn(fmtDate(confD),'vfin',vlr); addAn(fmtDate(confD),'vconf',vlr); }
+        if(expD){ addAn(fmtDate(expD),'expvol',vol); addAn(fmtDate(expD),'vexp',vlr); }
         const mk=String(impD.getMonth()+1).padStart(2,'0')+'/'+String(impD.getFullYear()).slice(2);
         c.byM[mk]=c.byM[mk]||{imp:0,exp:0,nfs:0}; c.byM[mk].imp+=pec; c.byM[mk].nfs+=1; if(expD) c.byM[mk].exp+=vol;
         if(pesaD&&!FECHADOS_MKT.includes(agKey)){
@@ -724,8 +734,8 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
           if(expD){ const hExp=(expD-pesaD)/3600000; const agKeyE=mLL[(pesaD||impD).getMonth()]+'/'+String((pesaD||impD).getFullYear()).slice(2); c.ag_exp_raw[agKeyE]=c.ag_exp_raw[agKeyE]||{tot:0,bins:[0,0,0,0,0,0]}; c.ag_exp_raw[agKeyE].tot+=vol; const fe=hExp<=6?0:hExp<=12?1:hExp<=18?2:hExp<=24?3:hExp<=48?4:5; c.ag_exp_raw[agKeyE].bins[fe]+=vol; }
         }
         const stNorm=st.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        if(stNorm.includes('SEPAR')) c.saldo_sep+=pec;
-        if(stNorm.includes('CONFER')) c.saldo_conf+=pec;
+        if(stNorm.includes('SEPAR')){ c.saldo_sep+=pec; c.saldo_sep_val=(c.saldo_sep_val||0)+vlr; }
+        if(stNorm.includes('CONFER')){ c.saldo_conf+=pec; c.saldo_conf_val=(c.saldo_conf_val||0)+vlr; }
         c.last_date=impK;
       });
       function toPct(raw){ const r={}; Object.keys(raw).forEach(k=>{ const{tot,bins}=raw[k]; if(tot>0) r[k]=bins.map(b=>+(b/tot*100).toFixed(1)); }); return r; }
@@ -760,7 +770,7 @@ document.getElementById('fi-csv').addEventListener('change',function(e){
 
         const lastDt=dailyList.length?dailyList[dailyList.length-1].data:'';
         const ts=new Date().toLocaleString('pt-BR');
-        MKT_DATA[canal]={daily:dailyList,an:anList,byM:mergedByMFinal,ag_fin:toPct(mergedFinRaw),ag_exp:toPct(mergedExpRaw),ag_fin_raw:mergedFinRaw,ag_exp_raw:mergedExpRaw,den24:den24M,fora24:fora24M,tot_sla:tot_slaM,saldo_sep:c.saldo_sep,saldo_conf:c.saldo_conf,last_date:lastDt,last_ts:ts};
+        MKT_DATA[canal]={daily:dailyList,an:anList,byM:mergedByMFinal,ag_fin:toPct(mergedFinRaw),ag_exp:toPct(mergedExpRaw),ag_fin_raw:mergedFinRaw,ag_exp_raw:mergedExpRaw,den24:den24M,fora24:fora24M,tot_sla:tot_slaM,saldo_sep:c.saldo_sep,saldo_conf:c.saldo_conf,saldo_sep_val:c.saldo_sep_val||0,saldo_conf_val:c.saldo_conf_val||0,last_date:lastDt,last_ts:ts};
         CANAL=canal;
       });
       document.getElementById('csv-lbl').textContent=f.name+' · '+Object.keys(canais).join(', ')+' · '+new Date().toLocaleDateString('pt-BR');
