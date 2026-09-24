@@ -1,17 +1,17 @@
 name: Atualizar dados do Metabase
- 
+
 on:
   schedule:
     - cron: '0 * * * *'   # de hora em hora (horario UTC)
   workflow_dispatch:       # botao "Run workflow" para atualizar na hora
- 
+
 permissions:
   contents: write
- 
+
 concurrency:
   group: atualizar-dados
   cancel-in-progress: false
- 
+
 jobs:
   atualizar:
     runs-on: self-hosted     # roda no computador da rede Darkside
@@ -23,7 +23,7 @@ jobs:
           MB_URL: https://darkdata.darksidebooks.com.br
           MB_TABLE: '72'
           # Somente colunas operacionais - NENHUM dado pessoal de cliente/motorista
-          COLUNAS: 'depositante;status_nf;classificacao_tipo_pedido;qtde_pecas;qtde_volumes;importado_em;separado_em;conferido_em;pesado_em;expedido_em'
+          COLUNAS: 'depositante;status_nf;classificacao_tipo_pedido;qtde_pecas;qtde_volumes;valor_total_nf;importado_em;separado_em;conferido_em;pesado_em;expedido_em'
           CAMPO_DATA: 'updated_at'
           MB_USER: ${{ secrets.METABASE_USER }}
           MB_PASS: ${{ secrets.METABASE_PASSWORD }}
@@ -35,7 +35,7 @@ jobs:
           $base  = $env:MB_URL.TrimEnd('/')
           $table = [int]$env:MB_TABLE
           if (-not $env:MB_USER -or -not $env:MB_PASS) { throw 'Secrets METABASE_USER / METABASE_PASSWORD nao cadastrados' }
- 
+
           # 1. Login no Metabase
           $login = @{ username = $env:MB_USER; password = $env:MB_PASS } | ConvertTo-Json
           try {
@@ -43,7 +43,7 @@ jobs:
           } catch { throw "Falha ao acessar/logar no Metabase: $($_.Exception.Message)" }
           Write-Host 'Login OK'
           $mbh = @{ 'X-Metabase-Session' = $token }
- 
+
           # 2. Colunas
           $meta   = Invoke-RestMethod -Uri "$base/api/table/$table/query_metadata" -Headers $mbh -TimeoutSec 60
           $wanted = @($env:COLUNAS -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
@@ -53,7 +53,7 @@ jobs:
           $sel    = @($wanted | ForEach-Object { $n = $_; $meta.fields | Where-Object { $_.name -eq $n } })
           $fData  = $meta.fields | Where-Object { $_.name -eq $env:CAMPO_DATA } | Select-Object -First 1
           $fStat  = $meta.fields | Where-Object { $_.name -eq 'status_nf' } | Select-Object -First 1
- 
+
           # 3. Pre-filtro no Metabase: atualizados desde o 1o dia do mes anterior
           $agora = [DateTime]::UtcNow.AddHours(-3)
           $ini   = ([DateTime]::new($agora.Year, $agora.Month, 1)).AddMonths(-1).ToString('yyyy-MM-dd')
@@ -61,7 +61,7 @@ jobs:
           $filtro = '[">=",["field",' + $fData.id + ',null],"' + $ini + '"]'
           $query  = '{"database":' + $meta.db_id + ',"type":"query","query":{"source-table":' + $table + ',"fields":[' + $fieldsJson + '],"filter":' + $filtro + '}}'
           Write-Host "Filtro: $($env:CAMPO_DATA) >= $ini"
- 
+
           # 4. Exporta CSV
           $out = Join-Path $env:RUNNER_TEMP 'wms_pedidos.csv'
           Invoke-WebRequest -Method Post -Uri "$base/api/dataset/csv" -Headers $mbh `
@@ -81,19 +81,19 @@ jobs:
           Write-Host ("Recorte: importados desde {0} -> {1} de {2} pedidos" -f $iniDate.ToString('dd/MM/yyyy'), $rows.Count, $antes)
           if ($rows.Count -lt 1) { throw 'Nenhum pedido no recorte - nada foi publicado' }
           Write-Host ("OK: {0} pedidos baixados | colunas: {1}" -f $rows.Count, (($rows[0].PSObject.Properties | ForEach-Object { $_.Name }) -join ' | '))
- 
+
           # 5. Confere depositantes (esperado: so Darkside) e publica arquivo unico
           foreach ($g in ($rows | Group-Object -Property $colDep)) { Write-Host ("  Depositante: {0} ({1} pedidos)" -f $g.Name, $g.Count) }
           $ex = $rows[0]
           Write-Host ("  exemplo: importado={0} | status={1} | classif={2} | pecas={3}" -f $ex.'Importado Em', $ex.'Status Nf', $ex.'Classificacao Tipo Pedido', $ex.'Qtde Pecas')
           $classes = ($rows | Group-Object -Property 'Classificacao Tipo Pedido' | Sort-Object Count -Descending | ForEach-Object { "{0}={1}" -f $_.Name, $_.Count }) -join ' | '
           Write-Host "  classificacoes: $classes"
- 
+
           $tmp = Join-Path $env:RUNNER_TEMP 'darkside.csv'
           $linhasCsv = $rows | ConvertTo-Csv -NoTypeInformation
           [IO.File]::WriteAllLines($tmp, $linhasCsv, (New-Object Text.UTF8Encoding($false)))
           $bytes = [IO.File]::ReadAllBytes($tmp)
- 
+
           $gh  = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'User-Agent' = 'robo-paineis' }
           $api = "https://api.github.com/repos/$env:GH_REPO/contents/dados/darkside.csv"
           $sha = $null
@@ -103,9 +103,8 @@ jobs:
           $ms.Write($hdr, 0, $hdr.Length); $ms.Write($bytes, 0, $bytes.Length)
           $blob = [BitConverter]::ToString([Security.Cryptography.SHA1]::Create().ComputeHash($ms.ToArray())).Replace('-', '').ToLower()
           if ($sha -eq $blob) { Write-Host 'Sem mudancas nos dados - nada a publicar'; exit 0 }
- 
+
           $body = @{ message = ('Dados Darkside ' + $agora.ToString('dd/MM/yyyy HH:mm')); content = [Convert]::ToBase64String($bytes) }
           if ($sha) { $body.sha = $sha }
           Invoke-RestMethod -Method Put -Uri $api -Headers $gh -ContentType 'application/json' -Body ($body | ConvertTo-Json) | Out-Null
           Write-Host ("Publicado em dados/darkside.csv ({0:N1} MB)" -f ($bytes.Length / 1MB))
- 
